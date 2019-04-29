@@ -1,0 +1,5 @@
+	trial	response	speed	player	ball	direction	goal_size	goal_height	ID	session
+0	0	v	NA	NA	NA	+	1.75	-3.5	CK	1
+1	1	n	NA	NA	NA	+	2.0	-4.0	CK	1
+0	0	v	NA	NA	NA	+	4.25	-8.5	CK	1
+1	1	n	NA	NA	NA	-	2.75	-5.5	CK	1

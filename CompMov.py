@@ -3,8 +3,8 @@
 
 # Needs two versions: for Linux (iohub working) and windows (iohub not working)
 
-win = True
-lin = False
+win = False
+lin = True
 
 # Setup of the environment
 # Import relevant functions
@@ -27,12 +27,12 @@ session = 1
 # Setup design and screen
 # Define number of blocks and trials
 nblock = 2
-ntrial = 10
+ntrial = 2
 
 # Define the test monitor, keyboard and objects
 # Find out how the window gets automatically full screen
 # mouse is not used mymouse = event.Mouse(visible = True, win = mywin)
-mywin    = visual.Window([1000,800], monitor = 'testMonitor', units = 'cm')
+mywin    = visual.Window(fullscr=True, monitor = 'testMonitor', units = 'cm')
 exp_data = pd.DataFrame(np.nan, index=[], columns=['trial','response', 'speed', 'player', 'ball', 'direction', 'goal_size', 'goal_height'])
 mygoal   = visual.Line(win = mywin, start = (0,0),end = (0,0))
 myball   = visual.GratingStim(win=mywin, mask = 'circle', pos = [0,0], size = 1, sf= 0, color='red') 
