@@ -170,7 +170,10 @@ def play_trial(t_speed, t_player, t_ball, t_win, t_sign, t_goal, t_keeper, t_rat
     # update window
     mywin.flip()
     # wait for keypress
-    event.waitKeys(keyList=['b'])
+    if win:
+        event.waitKeys(keyList=['b'])
+    else:
+        pass  ## needs adjustment for iohub
     # draw player on screen
     t_player.draw()
     # draw goal
