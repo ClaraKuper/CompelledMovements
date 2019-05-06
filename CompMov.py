@@ -3,12 +3,13 @@
 
 # Needs two versions: for Linux (iohub working) and windows (iohub not working)
 
-win = False
-lin = True
+win = True
+lin = False
 
 # Setup of the environment
 # Import relevant functions
 from psychopy import visual, core, event
+import os as os
 import random as rd
 import numpy as np
 import pandas as pd
@@ -18,7 +19,7 @@ if lin:
 # clean all data in the environment
 
 # input file
-data_file = 'Some Name'
+data_file = 'data_full.txt'
 
 # get participant data
 name = 'CK'
@@ -28,8 +29,8 @@ code = 'ck01'
 
 # Setup design and screen
 # Define number of blocks and trials
-nblock = 2
-ntrial = 2
+nblock = 20
+ntrial = 10
 
 # Define the test monitor, keyboard and objects
 # Find out how the window gets automatically full screen
@@ -57,15 +58,18 @@ def check_file(data_file):
 
 # build a function that writes data to file
 
-def write_to_file(data,data_file):
+def join_data_file(data,data_file):
     '''
     writes information to fila - can be done for data and design
     '''
-    # open file with permission "write"
-    # find last line
-    # write below last line
-    # close file
-    pass
+    # is there already a data file?
+    if os.path.isfile(data_file):
+        old_data = pd.read_csv(data_file, sep = '\t')
+        data     = pd.concat([old_data,data])
+    else:
+        pass
+    # 
+    return data
 
 #make contact to eyetracker etc.
 
@@ -258,7 +262,6 @@ def play_block(trial_number,speed_list, player_pos_list,ball_pos_list, ball_dire
     # play all trials in one block
     # initialize data frame
     trial_data = pd.DataFrame('NA', index=drange(0,trial_number,1), columns=['trial','response', 'speed', 'player', 'ball', 'direction', 'goal_size', 'goal_height'])
-    trial_data.shape
 
     for trial in range(trial_number):
         # set parameters for player, ball and goal
@@ -304,22 +307,23 @@ def play_experiment(blockn):
         # play all blocks
         block_data = play_block(ntrial,speed_list, player_pos_list,ball_pos_list, ball_direction_list, goal_distance_list, goal_broad_list,global_ratio)
         # save the keys
-        exp_data = pd.concat([exp_data,block_data])
+        block_data['ID']       =  name
+        block_data['session']  =  session
+        block_data['block']    =  block
+        complete_data = join_data_file(block_data,data_file)
+        complete_data.to_csv(data_file, sep='\t', encoding='utf-8', index = False)
         # clear screen after block is over and wait a little bit
         mywin.flip()
         core.wait(3.0)
         
-    return exp_data
+    return True
 
 
 # Play the experiment:
-data = play_experiment(nblock)
-data['ID']       =  name
-data['session']  =  session
+played = play_experiment(nblock)
 
-
-# Save the output as text file
-data.to_csv('experiment_data.txt', sep='\t', encoding='utf-8')
+if played:
+    print ('The experiment ran successfull')
 
 # end and close after 3 secs
 core.wait(1.0)
