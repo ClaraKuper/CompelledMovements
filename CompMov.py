@@ -13,7 +13,7 @@ import random as rd
 import numpy as np
 import pandas as pd
 if lin:
-    from psychopy.iohub import launchHubServer
+    from psychopy.iohub.client import launchHubServer
 
 # clean all data in the environment
 
@@ -23,6 +23,8 @@ data_file = 'Some Name'
 # get participant data
 name = 'CK'
 session = 1
+
+code = 'ck01'
 
 # Setup design and screen
 # Define number of blocks and trials
@@ -40,7 +42,7 @@ mykeeper = visual.GratingStim(win=mywin, mask = 'circle', pos = [0,0], size = 1,
 myplayer = visual.GratingStim(win=mywin, mask = 'circle', pos = [0,0], size = 1, sf = 0,color='blue')
 
 if lin:
-    io      = launchHubServer(experiment_code = 'compelled_move', psychopy_monitor_name = 'default')
+    io      = launchHubServer(experiment_code = name, session_code = session, psychopy_monitor_name = 'default')
     mykb    = io.devices.keyboard
     
 #teams    = visual.TextStim(win = mywin,text = 'Heute spielt: FSC Friedrichshaus vs Eschbacher Bombers', pos = (0,0))
@@ -170,21 +172,25 @@ def play_trial(t_speed, t_player, t_ball, t_win, t_sign, t_goal, t_keeper, t_rat
     # update window
     mywin.flip()
     # wait for keypress
+    io.devices.keyboard.waitForKeys(keys=[] , maxWait= 0, clear = True)
     if win:
-        event.waitKeys(keyList=['b'])
+        keys = event.waitKeys(keyList=['b'])
     else:
-        pass  ## needs adjustment for iohub
-    # draw player on screen
-    t_player.draw()
-    # draw goal
-    t_goal.draw()
-    # draw keeper
-    t_keeper.draw()
-    # draw ball on screen
-    t_ball.draw()
-    mywin.flip()
-    # wait for jitter
-    core.wait(0.5)
+        keys = io.devices.keyboard.waitForKeys(keys = ['b',], maxWait = 10)
+    if keys:
+        # draw player on screen
+        t_player.draw()
+        # draw goal
+        t_goal.draw()
+        # draw keeper
+        t_keeper.draw()
+        # draw ball on screen
+        t_ball.draw()
+        mywin.flip()
+        # wait for jitter
+        core.wait(0.5)
+    else:
+        pass
     
     # Update the screen with every frame
     trial_on = True
@@ -319,5 +325,6 @@ data.to_csv('experiment_data.txt', sep='\t', encoding='utf-8')
 core.wait(1.0)
 mywin.saveFrameIntervals(fileName = 'framtime.log')
 mywin.close()
-#io.quit()
+if lin:
+    io.quit()
 core.quit()
