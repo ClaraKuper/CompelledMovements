@@ -1,195 +1,171 @@
 # Compelled movements - The football task
 # Clara Kuper 2019
 
+# Troubleshoots needed:
+# Track timimg of stimulus and response
+# Keypresses only when wanted
+# Save design output
+# Design matrix to data frame
+
 # Needs two versions: for Linux (iohub working) and windows (iohub not working)
 
-win = True
-lin = False
+win = False
+lin = True
 
 # Setup of the environment
 # Import relevant functions
-from psychopy import visual, core, event
+
+from psychopy import visual, core, event, gui
 import os as os
 import random as rd
 import numpy as np
 import pandas as pd
+import myfuncs as mf
 if lin:
     from psychopy.iohub.client import launchHubServer
 
-# clean all data in the environment
+global visual, core, event, gui, os, rd, np, pd, mf
 
-# input file
-data_file = 'data_full.txt'
+## Parameters
+## General parameters
+path_to_exp    = '/home/clara/Documents/projects/CompelledMovements'
+path_to_dat    = path_to_exp + '/data'
+
+prep_time_pre  = 0.2
+prep_time_post = 0.2
+
+reps   = 2
+nblock = 2
+
+window_size    = []
+fullscreen     = True
+background_rgb = [1,1,1]
+scrcenter      = [0,0]
+
+## Stimulus parameters
+# the speed of the ball
+speed          = 0.5
+# angle of flight (ration between cath & ancath)
+sides_ratio    = 0.5
+# the start position of the player
+player_start   = 2
+# start position of the ball
+ball_start     = 0
+# will the ball fly left or right
+ball_directions= ['+','-']
+# how long is the flight
+goal_distance       = mf.drange(2.0,9.0,0.5)
+
+# participant
 
 # get participant data
-name = 'CK'
-session = 1
+data_file, name, session = mf.get_data()
 
-code = 'ck01'
-
-# Setup design and screen
-# Define number of blocks and trials
-nblock = 20
-ntrial = 10
-
-# Define the test monitor, keyboard and objects
-# Find out how the window gets automatically full screen
-# mouse is not used mymouse = event.Mouse(visible = True, win = mywin)
-mywin    = visual.Window(fullscr=True, monitor = 'testMonitor', units = 'cm')
+mywin    = visual.Window(size = window_size, allowGUI = True, fullscr=True, monitor = 'testMonitor', units = 'norm')
+## that goes to make_design
 exp_data = pd.DataFrame(np.nan, index=[], columns=['trial','response', 'speed', 'player', 'ball', 'direction', 'goal_size', 'goal_height'])
+##
 mygoal   = visual.Line(win = mywin, start = (0,0),end = (0,0))
-myball   = visual.GratingStim(win=mywin, mask = 'circle', pos = [0,0], size = 1, sf= 0, color='red') 
-mykeeper = visual.GratingStim(win=mywin, mask = 'circle', pos = [0,0], size = 1, sf = 0,color='green')
-myplayer = visual.GratingStim(win=mywin, mask = 'circle', pos = [0,0], size = 1, sf = 0,color='blue')
+myball   = visual.GratingStim(win=mywin, mask = 'circle', pos = [0,0], size = 1, sf = 0, color='red') 
+mykeeper = visual.GratingStim(win=mywin, mask = 'circle', pos = [0,0], size = 1, sf = 0, color='green')
+myplayer = visual.GratingStim(win=mywin, mask = 'circle', pos = [0,0], size = 1, sf = 0, color='blue')
 
 if lin:
-    io      = launchHubServer(experiment_code = name, session_code = session, psychopy_monitor_name = 'default')
+    io      = launchHubServer(experiment_code = data_file, psychopy_monitor_name = 'default')
     mykb    = io.devices.keyboard
+    mykb.reporting = False
+
+
+
+## Make design
+dfs = []
+cond_i = 0
+for goal_dist in goal_distance:
+    for dir in ball_directions:
+        for rep in range(reps):
+            cond_i = cond_i + 1
+            trial_speed      = speed
+            trial_ball       = ball_start
+            trial_ratio      = sides_ratio
+            trial_player     = player_start
+            trial_goal_size  = float(goal_dist)*float(trial_ratio)
+            
+            df = pd.DataFrame(data = [cond_i,trial_speed,trial_player,trial_ball,dir,goal_dist,trial_goal_size], index = ['trial','speed','player_pos','ball_pos','direction','distance','broad'])
+            dfs.append(df)
+ntrials = len(dfs)
+
+# shuffe for random
+np.random.shuffle(dfs)
+
+# add trial number
+block_df = []
+
+for block in range(nblock):
+    for trial in range(ntrials):
+        df_temp = dfs[trial]
+        df_temp['trial_nr'] = trial+1
+        df_temp['block']    = block
+        dfs[trial]  = df_temp
+    block_df.append(dfs)
+
+# get trial 0
+df_trial_zero = df_temp
+
+# one data frame
+full_df       = pd.concat(block_df[0])
+
+# save design 
+full_df.to_csv(path_to_dat + '/des' + data_file, index = False)
+
+## Define the events in one trial
+## This takes as input information from the design matrix
+def play_trial(mywin , full_df, trial_id):
+
+    # define a timer
+    trial_timer    = core.Clock()
+    trial_prepared = False
+    trial_timer.reset()
+    trial_timer.add(prep_time_pre)
     
-#teams    = visual.TextStim(win = mywin,text = 'Heute spielt: FSC Friedrichshaus vs Eschbacher Bombers', pos = (0,0))
+    while trial_timer.getTime()<0:
+        if not trial_prepared:
+            # player, goal, keeper, ball
+            myplayer.setPos([0,full_df['player'][trial_id]])
+            myball.setPos([0,full_df['ball'][trial_id]])
+            mygoal.setStart([-full_df['broad'][trial_id],-full_df['distance'][trial_id]])
+            mygoal.setEnd([+full_df['broad'][trial_id],-full_df['distance'][trial_id]])
+            mykeeper.setPos([0,-full_df['distance'][trial_id]])
+            # reset answers
+            key_hit = False
+            # Define the duration of the trial in frames
+            # How long does the player move towards the ball
+            runtime   = (t_player.pos[1]-t_ball.pos[1])/t_speed
+            # How long does the ball move
+            ballfly   = (t_ball.pos[1]-t_goal.start[1])/t_speed
+            # How long are both times together
+            trialtime = int(runtime)+int(ballfly)+20
+            # initiate a list that will save the pressed keys
+            keypress  = []
+            trial_prepared = True
+        else:
+            pass
 
-# build a function that checks if the ID/session are already taken
-
-def check_file(data_file):
-    # open file as read
-    # check ID and number
-    # return true or false
-    pass
-
-# build a function that writes data to file
-
-def join_data_file(data,data_file):
-    '''
-    writes information to fila - can be done for data and design
-    '''
-    # is there already a data file?
-    if os.path.isfile(data_file):
-        old_data = pd.read_csv(data_file, sep = '\t')
-        data     = pd.concat([old_data,data])
-    else:
-        pass
-    # 
-    return data
-
-#make contact to eyetracker etc.
-
-
-# define a range function for decimals
-def drange(x,y,jump):
-    out = []
-    while x < y:
-        out.append(x)
-        x = x+jump
-    return out
-
-#  This function provide positive feedack
-def response_flicker(stim1, stim2, repetition, waiting_time):
-    positive_feedback = visual.TextStim(win = mywin,text = 'caught!', pos = (0,0))
-    for reps in range(repetition):
-        positive_feedback.draw()
-        # draw keeper
-        stim1.draw()
-        # update window
-        mywin.flip()
-        core.wait(0.1)
-        # draw ball on screen
-        stim2.draw()
-        positive_feedback.draw()
-        mywin.flip()
-        core.wait(0.1)
-
-def feedback_press():
-    visual.TextStim(win = mywin,text = 'Keep the key pressed!', pos = (0,0)).draw()
-
-def block_intro(nblock):
-    write = "Block %s" %(nblock+1)
-    visual.TextStim(win = mywin,text = write, pos = (0,0)).draw()
-
-# write a function to set up the design matrix
-def design_matrix(trials):
-    # the speed of the ball
-    speed_list          = []
-    speedrange          = [0.5]
-    # Define the angle for the shot
-    down_side_ratio     = 0.5
-    # the start position of the player
-    player_pos_list     = []
-    positions_player    = [2]
-    # start position of the ball
-    ball_pos_list       = []
-    positions_ball      = [0]
-    # will the ball fly left or right
-    ball_direction_list = []
-    ball_directions     = ['+','-']
-    # how long is the flight
-    goal_distance_list  = []
-    goal_distance       = drange(2,9,0.5)
-    # the size of the goal
-    # defined depending of the flight duration
-    goal_broad_list      = []
-    
-    # for all the trials in one block, write the parameters for the experimental design
-    for trial in range(trials):
-        #define the speed
-        speed_list.append(rd.sample(speedrange,1)[0])
-        #define the player position
-        player_pos_list.append(5)
-        # position of ball
-        ball_pos_list.append(rd.sample(positions_ball,1)[0])
-        # direction of shot
-        ball_direction_list.append(rd.sample((ball_directions),1))
-        # flight duration/goal distance
-        distance = rd.sample((goal_distance),1)[0]
-        goal_distance_list.append(distance)
-        # goal size
-        side_b = distance*down_side_ratio
-        goal_broad_list.append(side_b)
-        
-    # And make the information available
-    return speed_list, player_pos_list,ball_pos_list, ball_direction_list, goal_distance_list, goal_broad_list, down_side_ratio
-
-
-# Define the events in one trial
-# This takes as input information from the design matrix
-def play_trial(t_speed, t_player, t_ball, t_win, t_sign, t_goal, t_keeper, t_ratio):
-
-    # reset answers
-    key_hit = False
-    # Define the duration of the trial in frames
-    # How long does the player move towards the ball
-    runtime   = (t_player.pos[1]-t_ball.pos[1])/t_speed
-    # How long does the ball move
-    ballfly   = (t_ball.pos[1]-t_goal.start[1])/t_speed
-    # How long are both times together
-    trialtime = int(runtime)+int(ballfly)+20
-    # Set the speed of the ball, it's twice as fast as the player
-    ballspeed = t_speed
-    # initiate a list that will save the pressed keys
-    keypress  = []
-    # start the trial, present ball, player and goal and wait for a keypress
-    # draw player on screen
-    t_player.draw()
-    # draw ball on screen
-    t_ball.draw()
-    # draw goal
-    t_goal.draw()
-    # update window
-    mywin.flip()
     # wait for keypress
-    io.devices.keyboard.waitForKeys(keys=[] , maxWait= 0, clear = True)
+    mykb.reporting = True
     if win:
         keys = event.waitKeys(keyList=['b'])
     else:
         keys = io.devices.keyboard.waitForKeys(keys = ['b',], maxWait = 10)
     if keys:
+        mykb.reporting = False
         # draw player on screen
-        t_player.draw()
+        myplayer.draw()
         # draw goal
-        t_goal.draw()
+        mygoal.draw()
         # draw keeper
-        t_keeper.draw()
+        mykeeper.draw()
         # draw ball on screen
-        t_ball.draw()
+        myball.draw()
         mywin.flip()
         # wait for jitter
         core.wait(0.5)
@@ -197,33 +173,35 @@ def play_trial(t_speed, t_player, t_ball, t_win, t_sign, t_goal, t_keeper, t_rat
         pass
     
     # Update the screen with every frame
-    trial_on = True
-    while trial_on: 
+    while True: 
         for frameN in range(trialtime):
+            mykb.reporting = False
             # If the player has reached the ball
             if frameN >= runtime:
+                mykb.reporting = True
                 # update the position of the ball
-                t_ball.setPos([0.0,ballspeed],'-')
-                t_ball.setPos([ballspeed*t_ratio,0.0],t_sign[0])
+                myball.setPos([0.0,t_speed],'-')
+                myball.setPos([t_speed*t_ratio,0.0],t_sign[0])
             else:
+                
                 # update the position of the player and check if 'b' is pressed
-                t_player.setPos([0,t_speed],'-')
+                myplayer.setPos([0,t_speed],'-')
                 #was_pressed = t_kb.getReleases(keys = 'b',clear = True)
                 #if was_pressed:
                 #    print(was_pressed)
                     #feedback_press
-                    #mywin.flip
+                    #mywin.flipkb
                     #t_kb.clearEvents()
                     #core.wait(0.1)
                     #break
             # draw player on screen
-            t_player.draw()
+            myplayer.draw()
             # draw goal
-            t_goal.draw()
+            mygoal.draw()
             # draw keeper
-            t_keeper.draw()
+            mykeeper.draw()
             # draw ball on screen
-            t_ball.draw()
+            myball.draw()
             # update window
             mywin.flip()
             # check keyboard presses
@@ -233,23 +211,24 @@ def play_trial(t_speed, t_player, t_ball, t_win, t_sign, t_goal, t_keeper, t_rat
                 key_was_down_v = event.getKeys(keyList=['v'],timeStamped=True)
                 if key_was_down_n:
                     # print response right
-                    t_keeper.setPos(t_goal.end)
+                    mykeeper.setPos(t_goal.end)
                     keypress = 'n'
                     key_hit = True
                 if key_was_down_v:
                     #print response left
-                    t_keeper.setPos(t_goal.start)
+                    mykeeper.setPos(t_goal.start)
                     keypress = 'v'
                     key_hit = True
                 if key_was_down_x:
                     keypress = 'x'
                     key_hit = True
                     break
-            if int(t_ball.pos[0]) == int(t_keeper.pos[0]) and int(t_ball.pos[1]) == int(t_keeper.pos[1]):
-                response_flicker(t_ball,t_keeper,5,0.1)
+                mykb.reporting = False
+            if int(myball.pos[0]) == int(mykeeper.pos[0]) and int(myball.pos[1]) == int(mykeeper.pos[1]):
+                mf.response_flicker(myball,mykeeper,5,0.1)
                 trial_on = False
                 break
-        trial_on = False
+        break
     
     
     core.wait(0.5)
@@ -258,26 +237,15 @@ def play_trial(t_speed, t_player, t_ball, t_win, t_sign, t_goal, t_keeper, t_rat
 # define a function that gets the trial information and plays alls trial in a row
 # play all trials in a block
 
-def play_block(trial_number,speed_list, player_pos_list,ball_pos_list, ball_direction_list,goal_distance_list,goal_broad_list,my_ratio):
+def play_block(full_df, block_id):
     # play all trials in one block
     # initialize data frame
-    trial_data = pd.DataFrame('NA', index=drange(0,trial_number,1), columns=['trial','response', 'speed', 'player', 'ball', 'direction', 'goal_size', 'goal_height'])
+    block_data = full_df.query('block'== block_id)
 
     for trial in range(trial_number):
-        # set parameters for player, ball and goal
-        myplayer.setPos([0,player_pos_list[trial]])
-        myball.setPos([0,ball_pos_list[trial]])
-        mygoal.setStart([-goal_broad_list[trial],-goal_distance_list[trial]])
-        mygoal.setEnd([+goal_broad_list[trial],-goal_distance_list[trial]])
-        # set location parameter for keeper
-        mykeeper.setPos([0,(-goal_distance_list[trial])])
-        # save trial information
-        trial_data.iloc[trial]['direction']  = ball_direction_list[trial][0]
-        trial_data.iloc[trial]['goal_size']  = mygoal.end[(0)]
-        trial_data.iloc[trial]['goal_height']= mygoal.end[(1)]
-        trial_data.iloc[trial]['trial']      = trial
+        trial_data = block_data.query('trial_nr' == trial)
         # play trials and get the pressed keys
-        key_response   = play_trial(speed_list[trial],myplayer,myball,mywin,ball_direction_list[trial],mygoal,mykeeper,my_ratio)
+        key_response   = play_trial(mywin,trial_data)
         trial_data.iloc[trial]['response']   = str(key_response)
         
         # clear screen after trial is played
@@ -292,17 +260,21 @@ def play_block(trial_number,speed_list, player_pos_list,ball_pos_list, ball_dire
 # Run the entire experiment
 def play_experiment(blockn):
     # initialize data frame
-    exp_data = pd.DataFrame(np.nan, index=[], columns=['trial','response', 'speed', 'player', 'ball', 'direction', 'goal_size', 'goal_height'])
     mywin.flip()
     
     # for all blocks in the experiment
     for block in range(blockn):
         
         # define the parameters based on the design matrix
-        speed_list, player_pos_list,ball_pos_list, ball_direction_list, goal_distance_list, goal_broad_list, global_ratio = design_matrix(ntrial)
-        block_intro(block)
+        mf.block_intro(block)
         mywin.flip()
-        event.waitKeys(keyList=['b'])
+        
+        key_was_down_x = event.getKeys(keyList=['x'],timeStamped=True)
+        core.wait(0.5)
+        if key_was_down_x:
+            play = False
+        event.waitKeys(keyList=['g'])
+        
         
         # play all blocks
         block_data = play_block(ntrial,speed_list, player_pos_list,ball_pos_list, ball_direction_list, goal_distance_list, goal_broad_list,global_ratio)
