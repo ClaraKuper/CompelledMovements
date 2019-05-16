@@ -7,6 +7,11 @@
 # ioHub needs to work on PC
 ##########################################
 ##########################################
+##### Changes/Future Versions ############
+##########################################
+# Probabilty
+# Sudden change of direction with fixed goal distance
+##########################################
 
 # Setup of the environment
 # Import relevant functions
@@ -163,7 +168,7 @@ for block in range (nblock):
 full_df       = pd.concat(blocks)
 
 # save design 
-full_df.to_csv(path_to_dat + '/des' + name + session, index = False)
+full_df.to_csv(path_to_dat + '/des' + name + session + ".txt",sep='\t', encoding='utf-8', index = False)
 
 ###########################################
 ### functions for timing and presenting ###
@@ -331,7 +336,7 @@ def play_trial(mywin , trial_data, trial_id):
                     trial_on = False
                     break
         break
-    resp_data = pd.DataFrame(data = [[keypress,trial_id,t_start,t_set - t_start, t_ball - t_start, t_release, t_response - t_ball, t_goal-t_start]], columns = ['response','trial','t_start','t_set','t_ball','t_release','t_response','t_goal'])
+    resp_data = pd.DataFrame(data = [[keypress,trial_id+1,t_start,t_set - t_start, t_ball - t_start, t_release, t_response - t_ball, t_goal-t_start]], columns = ['response','trial_nr','t_start','t_set','t_ball','t_release','t_response','t_goal'])
     
     core.wait(0.5)
     
