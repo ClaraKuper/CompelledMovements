@@ -13,13 +13,12 @@ figure_path <- '../figures/'
 
 
 ########## Import Data #############################################
-ck05 <- read.table(paste(data_path,'ck5.txt', sep = ''), header = TRUE)
-ck07 <- read.table(paste(data_path,'ck7.txt', sep = ''), header = TRUE)
-des_ck05 <- read.table(paste(data_path,'desck5.txt', sep = ''),sep = ',', header = TRUE)
-des_ck07 <- read.table(paste(data_path,'desck7.txt', sep = ''),sep = ',', header = TRUE)
+ck01 <- read.table(paste(data_path,'ck1.txt', sep = ''), header = TRUE)
+des_ck01 <- read.table(paste(data_path,'desck1.txt', sep = ''), header = TRUE)
 
-all_resp <- rbind(ck05,ck07)
-all_des <- rbind(des_ck05,des_ck07)
+
+all_resp <- ck01
+all_des <- des_ck01
 
 ######### Preview Plots ###########################################
 ## Reaction times as function of distance
@@ -43,4 +42,7 @@ for (trial in 1:nrow(all_des)){
   }
 }
 
-plot(all_des$distance,all_resp$correct, ylim=c(-0.0,1))
+for (distance in unique(all_resp$correct)){
+  id = which(all_resp$correct == distance)
+  hist(all_des$distance[id]) 
+}
