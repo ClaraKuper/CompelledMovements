@@ -75,8 +75,8 @@ prep_time_pre  = 0.2
 prep_time_post = 0.2 ## not used 
 
 # repetition and blocks
-reps   = 1
-nblock = 1
+reps   = 2
+nblock = 5
 
 # screen
 window_size    = []
