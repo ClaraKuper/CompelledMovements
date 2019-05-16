@@ -65,7 +65,7 @@ def response_flicker(stim1, stim2, repetition, waiting_time):
         mywin.flip()
         core.wait(0.1)
 
-def block_intro(nblock):
+def block_intro(nblock,mywin):
     from psychopy import visual
     
     write = "Block %s" %(nblock+1)
