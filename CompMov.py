@@ -36,18 +36,19 @@ def get_data(path_to_dat):
     '''
     
     while True:
-        info = {'Participant':'Your Code','Experiment':'CompelledMovements','Session_No':0}
+        info = {'Participant':'Your Code','Experiment':'CoMo1','Session_No':0}
         infoDlg = gui.DlgFromDict(dictionary = info, title = 'participant data', fixed = ['Experiment'])
         
+        exp  = info['Experiment']
         name = info['Participant']
         session = str(info['Session_No'])
         # input file
-        data_file = path_to_dat + name + session + '.txt'
+        data_file = path_to_dat + exp + name + session + '.txt'
         
         if os.path.isfile(data_file):
             pass
         else: 
-            return data_file, name, session
+            return data_file, name, session, exp
 
 # define a range function for decimals
 def drange(x,y,jump):
@@ -76,7 +77,7 @@ prep_time_post = 0.2 ## not used
 
 # repetition and blocks
 reps   = 2
-nblock = 5
+nblock = 10
 
 # screen
 window_size    = []
@@ -108,7 +109,7 @@ jitter_time    = drange(0.3,1.0,0.15)
 #################
 
 # get participant data
-data_file, name, session = get_data(path_to_dat)
+data_file, name, session, exp = get_data(path_to_dat)
 
 
 
@@ -168,7 +169,7 @@ for block in range (nblock):
 full_df       = pd.concat(blocks)
 
 # save design 
-full_df.to_csv(path_to_dat + '/des' + name + session + ".txt",sep='\t', encoding='utf-8', index = False)
+full_df.to_csv(path_to_dat + '/' + exp + 'des' + name + session + ".txt",sep='\t', encoding='utf-8', index = False)
 
 ###########################################
 ### functions for timing and presenting ###

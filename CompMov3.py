@@ -1,11 +1,13 @@
-# Compelled movements - Sudden direction changes 
+# Compelled movements - Sudden direction onset 
 # Clara Kuper 2019
 #########################################
 #########################################
 # To Dos:
 # release key tracking
 # ioHub needs to work on PC
-# Sudden change of direction with fixed goal distance
+# stimulus moves straight, then moves 
+# in one direction
+# distance to the goal is fixed
 ##########################################
 ##########################################
 ##### Changes/Future Versions ############
@@ -36,7 +38,7 @@ def get_data(path_to_dat):
     '''
     
     while True:
-        info = {'Participant':'Your Code','Experiment':'CoMo2','Session_No':0}
+        info = {'Participant':'Your Code','Experiment':'CoMo3','Session_No':0}
         infoDlg = gui.DlgFromDict(dictionary = info, title = 'participant data', fixed = ['Experiment'])
         
         exp  = info['Experiment']
@@ -103,8 +105,6 @@ ball_directions= ['-','+']
 goal_distance  = 9
 # how broad is the goal
 goal_size      = 5
-# direction chance (yes/no)
-change         = [1,0]
 # distance of change
 dir_change     = [-1, -2, -3, -4, -5, -6, -7, -8]
 
@@ -144,21 +144,20 @@ cond_i = 0
 
 for rep in range(reps):
     for dir in ball_directions:
-        for ch in change:
-            for dir_ch in dir_change:
-                cond_i = cond_i + 1
-                trial_dir_ch     = dir_ch * ch
-                trial_goal_dis   = goal_distance
-                trial_speed      = speed
-                trial_ball       = ball_start
-                trial_ratio      = sides_ratio
-                trial_player     = player_start
-                trial_goal_size  = goal_size
-                trial_jitter     = np.random.choice(jitter_time,1)[0]
-                
-                df = pd.DataFrame(data = [[cond_i,trial_speed,trial_player,trial_ball,dir,trial_goal_dis,trial_goal_size,trial_jitter,ch,trial_dir_ch]], columns = ['trial','speed','player_pos','ball_pos','direction','distance','broad','jitter','change','change_loc'])
-                dfs.append(df)
-                
+        for dir_ch in dir_change:
+            cond_i = cond_i + 1
+            trial_dir_ch     = dir_ch
+            trial_goal_dis   = goal_distance
+            trial_speed      = speed
+            trial_ball       = ball_start
+            trial_ratio      = sides_ratio
+            trial_player     = player_start
+            trial_goal_size  = goal_size
+            trial_jitter     = np.random.choice(jitter_time,1)[0]
+            
+            df = pd.DataFrame(data = [[cond_i,trial_speed,trial_player,trial_ball,dir,trial_goal_dis,trial_goal_size,trial_jitter,trial_dir_ch]], columns = ['trial','speed','player_pos','ball_pos','direction','distance','broad','jitter','change_loc'])
+            dfs.append(df)
+
 ntrials = len(dfs)
 
 # arrange in blocks
@@ -257,13 +256,6 @@ def play_trial(mywin , trial_data, trial_id):
             # direction in which the ball flies initially
             sign      = trial_data['direction'].values
             trial_jitter = trial_data['jitter'].values
-            # is there a change at all
-            if trial_data['change'].values == 1:
-                d_change = True
-                if sign == '-':
-                    rev_sign = '+'
-                else:
-                    rev_sign = '-'
             # initiate a list that will save the pressed keys
             keypress  = []
             trial_prepared = True
@@ -302,15 +294,18 @@ def play_trial(mywin , trial_data, trial_id):
             # If the player has reached the ball
             if frameN == runtime:
                 t_ball = core.getTime()
-            if frameN == dirchange and d_change:
-                sign = rev_sign
+            if frameN == dirchange:
                 t_change = core.getTime()
-            if frameN >= runtime:
+            if frameN >= runtime and frameN < dirchange:
+                mykb.reporting = True
+                # update the position of the ball
+                myball.setPos([0.0,speed],'-')
+            if frameN >= dirchange:
                 mykb.reporting = True
                 # update the position of the ball
                 myball.setPos([0.0,speed],'-')
                 myball.setPos([speed*sides_ratio,0.0],sign)
-            else:
+            if frameN < runtime:
                 # update the position of the player
                 myplayer.setPos([0,speed],'-')
                 
