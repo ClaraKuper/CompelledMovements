@@ -1,0 +1,251 @@
+---
+title: "Perceptual decision making, motion and hand movements"
+output:
+  html_document: default
+  html_notebook: default
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r "setup"}
+# working directory
+knitr::opts_knit$set(root.dir = '~/Projects/CompelledMovements/data')
+```
+
+based on the paradigm and analysis by Stanford et al 2010 (compelled saccades), we tested observers responses to rapidly moving stimuli and determine how fast a direction change (available information about the direction) can be intergrated in visual processing
+
+We run 3 different experiments, where presentation of the stimuli differ in terms of predictability.
+
+All experiments are analysed based on the design used by stanford and colleagues.
+
+preparation: 
+the "effective processing time" is determined, in this version it includes an estimate for non-decision time that is approximated as the fasted reaction time observed in the respective experiment.
+ePT = t(respons)-t(target)-t(ND)
+
+Analysis
+1 - % correct answers as a function of gap time
+2 - Reaction times as a function of gap time 
+3 - Frequencies of ePTs in correct/incorrect answers
+4 - % correct answers as a function of ePT
+5 - Frequencies of reaction times for correct/incorrect answers at different gaps
+
+What this notebook should do:
+
+Define functions that run the 5 analysis above
+Run them for all 3 experiments
+Compare the results
+
+Plot the results
+```{r}
+# step one - prepare functions
+
+# get nd time as minimum reaction time
+get_nd_time <- function(data){
+  # remove negative values
+  rea_times <- data#[-which(data<0)]
+  
+  return(as.numeric(quantile(rea_times, 0.25)))
+}
+
+# define correct and incorrect answers 
+label_resp <- function(direction, response){
+  label_vec <- vector()
+  cnt <- 1
+  for (resp in response){
+    label <- NA
+    if (resp == 'v'){
+      if  (direction[cnt] == '-'){
+      label <- 1
+      }
+      else{
+        label <- 0
+        }
+      }
+    if (resp == 'n'){
+      if (direction[cnt] == '+'){
+        label <- 1
+      }
+      else{
+      label <- 0
+      }
+    } 
+    label_vec[cnt] <- label 
+    cnt <- cnt+1
+  } 
+  return(label_vec)
+}
+
+# prepare a dataset with % correct for bins of gap times
+binned_data <- function(data_time, data_resp, start, stop, step){
+  steps_dis = seq(start,stop,step)
+  start_dis = start - step
+  outmat = matrix(nrow=length(steps_dis), ncol = 2)
+
+  for (step in steps_dis){
+    idx_time <- which(data_time>=start_dis & data_time<=step)
+    samples <- length(idx_time)
+    percentage <- sum(data_resp[idx_time],na.rm=TRUE)/samples
+    outmat[which(steps_dis == step),1] <- step
+    outmat[which(steps_dis == step),2] <- percentage
+    start_dis = step
+    }
+  return(outmat)
+}
+```
+
+Experiment 1 - variation in distance ball-goal
+In this experiment there is not such a thing as "gap time"
+We can model the flight time alternatively or the reaction time
+
+```{r}
+
+CoMo1_data   <- read.table("CoMo1ck1.txt",header = TRUE)
+CoMo1_design <- read.table("CoMo1desck1.txt",header = TRUE)
+
+id_rm        <- which(CoMo1_data$response != 'n' & CoMo1_data$response != 'v')
+
+CoMo1_data   <- CoMo1_data[-id_rm,]
+CoMo1_design <- CoMo1_design[-id_rm,]
+
+CoMo1_data$correct <- label_resp(CoMo1_design$direction,CoMo1_data$response)
+NP           <- get_nd_time(CoMo1_data$t_response)
+
+# t_response is relative to the onset of the ball motion  
+CoMo1_data$ePT     <- CoMo1_data$t_response - NP
+
+# check distribution of ePT
+summary(CoMo1_data$t_response)
+
+#ana 1 - correct answers as a function of gap time (not possible here, using goal distance)
+CoMo1_dis <- binned_data(CoMo1_design$distance,CoMo1_data$correct,1,8,1)
+
+
+#ana 2 - reaction times as a function of distance
+#build a model, linear regression
+#Null model - explained by mean
+aov_CoMo1_rea_times <- aov(CoMo1_data$t_response ~ CoMo1_design$distance) 
+summary(aov_CoMo1_rea_times)
+
+#ana 3 - Frequencies of ePTs in correct/incorrect answers
+correct_CoMo1   <- CoMo1_data[which(CoMo1_data$correct==1),]
+incorrect_CoMo1 <- CoMo1_data[which(CoMo1_data$correct==0),]
+
+corr_his   <- hist(correct_CoMo1$ePT)
+corr_his$density = corr_his$counts/sum(corr_his$counts)*100
+plot(corr_his,freq=FALSE)
+
+incorr_his <- hist(incorrect_CoMo1$ePT)
+incorr_his$density = incorr_his$counts/sum(incorr_his$counts)*100
+plot(incorr_his,freq=FALSE)
+
+#ana 4 - % correct answers as a function of ePT
+CoMo1_bin <- binned_data(CoMo1_data$ePT,CoMo1_data$correct,-0.1,0.4,0.05)
+
+#ana 5 - left out so far
+
+
+```
+
+Experiment 2 - sudden change of direction
+
+```{r}
+
+CoMo2_data   <- read.table("CoMo2ck0.txt",header = TRUE)
+CoMo2_design <- read.table("CoMo2desck0.txt",header = TRUE)
+
+id_rm        <- which(CoMo2_data$response != 'n' & CoMo2_data$response != 'v')
+
+CoMo2_data   <- CoMo2_data[-id_rm,]
+CoMo2_design <- CoMo2_design[-id_rm,]
+
+CoMo2_data$correct <- label_resp(CoMo2_data$rev_sign,CoMo2_data$response)
+NP          <- get_nd_time(CoMo2_data$t_response)
+
+CoMo2_data$t_change<- CoMo2_data$t_change*CoMo2_design$change 
+
+# t_response is relative to the onset of the ball motion  
+CoMo2_data$ePT     <- (CoMo2_data$t_response+CoMo2_data$t_ball) - CoMo2_data$t_change - NP
+
+# check distribution of ePT
+summary(CoMo2_data$t_change)
+
+#ana 1 - correct answers as a function of gap time (not possible here, using goal distance)
+CoMo2_dis <- binned_data(CoMo2_data$t_change,CoMo2_data$correct,0,1.5,0.1)
+
+
+#ana 2 - reaction times as a function of distance
+#build a model, linear regression
+#Null model - explained by mean
+aov_CoMo2_rea_times <- aov(CoMo2_data$t_response ~ CoMo2_design$change_loc) 
+summary(aov_CoMo2_rea_times)
+
+#ana 3 - Frequencies of ePTs in correct/incorrect answers
+correct_CoMo2   <- CoMo2_data[which(CoMo2_data$correct==1),]
+incorrect_CoMo2 <- CoMo2_data[which(CoMo2_data$correct==0),]
+incorrect_CoMo2 <- incorrect_CoMo2[which(incorrect_CoMo2$ePT<1),]
+
+corr_his2   <- hist(correct_CoMo2$ePT,breaks = seq(-0.4,1,0.1))
+corr_his2$density = corr_his2$counts/sum(corr_his2$counts)*100
+plot(corr_his2,freq=FALSE)
+
+incorr_his2 <- hist(incorrect_CoMo2$ePT, breaks = seq(-0.4,1,0.1))
+incorr_his2$density = incorr_his2$counts/sum(incorr_his2$counts)*100
+plot(incorr_his2,freq=FALSE)
+
+#ana 4 - % correct answers as a function of ePT
+CoMo2_bin <- binned_data(CoMo2_data$ePT,CoMo2_data$correct,-0.3,0.6,0.1)
+
+#ana 5 - left out so far
+
+
+```
+
+Experiment 3: direction suddenly
+
+```{r}
+
+CoMo3_data   <- read.table("CoMo3ck1.txt",header = TRUE)
+CoMo3_design <- read.table("CoMo3desck1.txt",header = TRUE)
+
+id_rm        <- which(CoMo3_data$response != 'n' & CoMo3_data$response != 'v')
+
+CoMo3_data$correct <- label_resp(CoMo3_design$direction,CoMo3_data$response)
+NP          <- get_nd_time(CoMo3_data$t_response)
+
+# t_response is relative to the onset of the ball motion  
+CoMo3_data$ePT     <- CoMo3_data$t_response - (CoMo3_data$t_change-CoMo3_data$t_ball) - NP
+
+# check distribution of ePT
+summary(CoMo3_data$t_change)
+
+#ana 1 - correct answers as a function of gap time (not possible here, using goal distance)
+CoMo3_dis <- binned_data(CoMo3_data$t_change,CoMo3_data$correct,0.3,1.0,0.1)
+
+
+#ana 2 - reaction times as a function of distance
+#build a model, linear regression
+#Null model - explained by mean
+aov_CoMo3_rea_times <- aov(CoMo3_data$t_response ~ CoMo3_design$change_loc) 
+summary(aov_CoMo3_rea_times)
+
+#ana 3 - Frequencies of ePTs in correct/incorrect answers
+correct_CoMo3   <- CoMo3_data[which(CoMo3_data$correct==1),]
+incorrect_CoMo3 <- CoMo3_data[which(CoMo3_data$correct==0),]
+
+corr_his3   <- hist(correct_CoMo3$ePT)
+corr_his3$density = corr_his3$counts/sum(corr_his3$counts)*100
+plot(corr_his3,freq=FALSE)
+
+incorr_his3 <- hist(incorrect_CoMo3$ePT)
+incorr_his3$density = incorr_his3$counts/sum(incorr_his3$counts)*100
+plot(incorr_his3,freq=FALSE)
+
+#ana 4 - % correct answers as a function of ePT
+CoMo3_bin <- binned_data(CoMo3_data$ePT,CoMo3_data$correct,-0.3,0.3,0.1)
+
+#ana 5 - left out so far
+
+
+```
