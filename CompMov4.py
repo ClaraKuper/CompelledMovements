@@ -70,16 +70,16 @@ def drange(x,y,jump):
 ##########################################
 
 # path
-path_to_exp    = 'C:\\Users\\Clara\\Documents\\Projects\\CompelledMovements'
-path_to_dat    = path_to_exp + '\\data\\'
+path_to_exp    = '/home/clara/Documents/projects/CompelledMovements/'
+path_to_dat    = path_to_exp + 'data/'
 
 # waiting times
 prep_time_pre  = 0.2
 prep_time_post = 0.2 ## not used 
 
 # repetition and blocks
-reps   = 4
-nblock = 10
+reps   = 1
+nblock = 1
 
 # screen
 window_size    = []
@@ -179,16 +179,22 @@ full_df.to_csv(path_to_dat + exp + 'des' + name + session + ".txt",sep='\t', enc
 ### functions for timing and presenting ###
 ###########################################
 
-def feedback(waiting_time, feedback):
+def feedback(waiting_time, feedback , points):
     '''
     take to stimuli and print them alternating while showing the word "caught"
     '''
     
-    positive_feedback = visual.TextStim(win = mywin,text = feedback, pos = (0,0))
-    
-    positive_feedback.draw()
-    mywin.flip()
-    core.wait(waiting_time)
+    basic_feedback = visual.TextStim(win = mywin,text = feedback, pos = (0,0))
+    point_feedback = visual.TextStim(win = mywin,text = str(points), pos = (0,1))
+    timer = core.Clock()
+    timer.reset()
+    timer.add(waiting_time)
+    while timer.getTime() < 0:
+        basic_feedback.draw()
+        point_feedback.draw()
+        mywin.flip()
+        point_feedback.setPos([0.0,0.1],'+')
+
 
 def block_intro(nblock,mywin):
     '''
@@ -286,14 +292,13 @@ def play_trial(mywin , trial_data, trial_id):
     
     # Update the screen with every frame
     while True: 
-        mykb.reporting = False
         gap_timer.reset()
         gap_timer.add(dirchange)
         
+        mykb.reporting = True
         t_ball = core.getTime()
         while gap_timer.getTime() < 0:
             # ball flight straight
-            mykb.reporting = True
             # update the position of the ball
             myball.setPos([0.0,speed],'-')
             mygoal.draw()
@@ -359,11 +364,11 @@ def play_trial(mywin , trial_data, trial_id):
             if int(myball.pos[1]) == int(mygoal.start[1]):
                 t_goal = core.getTime()
                 if correct == 1:
-                    feedback(0.5, 'caught')
+                    feedback(0.5, 'caught','+5')
                 if correct == 0:
-                    feedback(0.5, 'missed')
+                    feedback(0.5, 'missed','0')
                 if correct == 'na':
-                    feedback(0.5, 'too slow!!')
+                    feedback(0.5, 'too slow!!','-10')
                 mykb.reporting = False
                 goal_reached   = True
             
