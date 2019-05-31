@@ -70,8 +70,8 @@ def drange(x,y,jump):
 ##########################################
 
 # path
-path_to_exp    = '/home/clara/Documents/projects/CompelledMovements'
-path_to_dat    = path_to_exp + '/data/'
+path_to_exp    = 'C:\\Users\\Clara\\Documents\\Projects\\CompelledMovements'
+path_to_dat    = path_to_exp + '\\data\\'
 
 # waiting times
 prep_time_pre  = 0.2
@@ -95,16 +95,14 @@ scrcenter      = [0,0]
 speed          = 0.5
 # translation to left/right
 shift_size     = [-5,+5]
-# the start position of the player
-player_start   = 5
 # start position of the ball
-ball_start     = 1
+ball_start     = 3
 # how long is the flight
 goal_distance  = 9
 # how broad is the goal
 goal_size      = 5
 # distance of change
-dir_change     = drange(-8.5, -4, 0.5)
+dir_change     = drange(0.0, 0.6, 0.1)
 
 # jitter time
 jitter_time    = drange(0.3,1.0,0.15)
@@ -129,9 +127,10 @@ mykb.reporting = False
 mywin    = visual.Window(display.getPixelResolution(), allowGUI = True, fullscr = fullscreen, monitor = 'testMonitor', units = 'cm')
 mywin.MouseVisible = False
 mygoal   = visual.Line(win = mywin, start = (0,0),end = (0,0))
-myball   = visual.GratingStim(win=mywin, mask = 'circle', pos = [0,0], size = 1, sf = 0, color='red') 
+myball   = visual.GratingStim(win=mywin, mask = 'circle', pos = [0,0], size = 1, sf = 0, color='white') 
 mykeeper = visual.Line(win = mywin, start = (0,0),end = (0,0),lineColor = 'black')
-myplayer = visual.GratingStim(win=mywin, mask = 'circle', pos = [0,0], size = 1, sf = 0, color='blue')
+trial_timer    = core.Clock()
+gap_timer      = core.Clock()
 
 #################
 ## Make design ##
@@ -148,11 +147,10 @@ for rep in range(reps):
             trial_speed      = speed
             trial_ball       = ball_start
             trial_shift      = shift
-            trial_player     = player_start
             trial_goal_size  = goal_size
             trial_jitter     = np.random.choice(jitter_time,1)[0]
             
-            df = pd.DataFrame(data = [[cond_i,trial_speed,trial_player,trial_ball,trial_goal_dis,trial_goal_size,trial_jitter,dir_ch, trial_shift]], columns = ['trial','speed','player_pos','ball_pos','distance','broad','jitter','change_loc', 'shift_pos'])
+            df = pd.DataFrame(data = [[cond_i,trial_speed,trial_ball,trial_goal_dis,trial_goal_size,trial_jitter,dir_ch, trial_shift]], columns = ['trial','speed','ball_pos','distance','broad','jitter','gap_time', 'shift_pos'])
             dfs.append(df)
 
 ntrials = len(dfs)
@@ -175,7 +173,7 @@ for block in range (nblock):
 full_df       = pd.concat(blocks)
 
 # save design 
-full_df.to_csv(path_to_dat + '/' + exp + 'des' + name + session + ".txt",sep='\t', encoding='utf-8', index = False)
+full_df.to_csv(path_to_dat + exp + 'des' + name + session + ".txt",sep='\t', encoding='utf-8', index = False)
 
 ###########################################
 ### functions for timing and presenting ###
@@ -199,6 +197,18 @@ def block_intro(nblock,mywin):
     write = "Block %s" %(nblock+1)
     visual.TextStim(win = mywin,text = write, pos = (0,0)).draw()
 
+def check_correct(resp,new_loc):
+    if resp == 'n': 
+        if new_loc > 0:
+            return 1
+        else:
+            return 0
+    if resp == 'v':
+        if new_loc < 0:
+            return 1
+        else: 
+            return 0
+
 ##################################
 ##### Single Trial Function ######
 ##################################
@@ -210,7 +220,6 @@ def play_trial(mywin , trial_data, trial_id):
     '''
     
     # define a timer
-    trial_timer    = core.Clock()
     trial_prepared = False
     trial_timer.reset()
     trial_timer.add(prep_time_pre)
@@ -222,56 +231,48 @@ def play_trial(mywin , trial_data, trial_id):
             t_set        = 0
             t_ball       = 0
             t_release    = 0
+            t_change     = 0
             t_response   = 0
             t_goal       = 0
-            t_change_loc = 0
-
+            correct      = 'na'
+            
             # set position of stimuli
-            myplayer.setPos([0,int(trial_data['player_pos'])])
             myball.setPos([0,int(trial_data['ball_pos'])])
             mygoal.setStart([-int(trial_data['broad']),-int(trial_data['distance'])])
             mygoal.setEnd([+int(trial_data['broad']),-int(trial_data['distance'])])
             keeper_cover = int(trial_data['broad'])
-            mykeeper.setStart([mygoal.start[0]+(keeper_cover/2),mygoal.start[1]])            
+            mykeeper.setStart([mygoal.start[0]+(keeper_cover/2),mygoal.start[1]])
             mykeeper.setEnd([mygoal.end[0]-(keeper_cover/2),mygoal.start[1]])
             # reset answers
             key_hit = False
             # reset keyboard
             io.clearEvents('all')
-            # Define the duration of the trial in frames
-            # How long does the player move towards the ball
-            runtime   = (myplayer.pos[1]-myball.pos[1])/speed
-            # How long does the ball move
-            ballfly   = (myball.pos[1]-mygoal.start[1])/speed
             # When does the ball change direction
-            dirchange = (myball.pos[1]-trial_data['change_loc'].values)/speed
-            # How long are both times together
-            trialtime = int(runtime)+int(ballfly)+20
-            # new x-position of the ball after jump
-            new_pos      = trial_data['shift_pos'].values
-            trial_jitter = trial_data['jitter'].values
+            dirchange = trial_data['gap_time'].values
+            # shifted position 
+            new_pos   = trial_data['shift_pos'].values
+            
             # initiate a list that will save the pressed keys
             keypress  = []
-            resp_corr = 0
+            
+            # labels for while loops
+            jumped         = False
+            goal_reached   = False
             trial_prepared = True
+            
         else:
             pass
 
     # wait for keypress
     mykb.reporting = True
-    # draw player on screen
-    myplayer.draw()
     # draw goal
     mygoal.draw()
     # draw ball on screen
     myball.draw()
-
     t_start = mywin.flip()
-    keys = io.devices.keyboard.waitForKeys(keys = ['b'])
     
+    keys = io.devices.keyboard.waitForKeys(keys = ['b'])
     mykb.reporting = False
-    # draw player on screen
-    myplayer.draw()
     # draw goal
     mygoal.draw()
     # draw keeper
@@ -279,35 +280,57 @@ def play_trial(mywin , trial_data, trial_id):
     # draw ball on screen
     myball.draw()
     t_set = mywin.flip()
+    
     # wait for jitter
     core.wait(trial_jitter)
     
     # Update the screen with every frame
     while True: 
-        for frameN in range(trialtime):
-            mykb.reporting = False
-            # If the player has reached the ball
-            if frameN == runtime:
-                t_ball = core.getTime()
-            if frameN == dirchange:
-                myball.setPos([new_pos,0.0],'+'),
-                t_change = core.getTime()
-            if frameN >= runtime and frameN < dirchange:
-                # ball flight straight
-                mykb.reporting = True
-                # update the position of the ball
-                myball.setPos([0.0,speed],'-')
-            if frameN >= dirchange:
-                # ball switches position
-                mykb.reporting = True
-                # update the position of the ball
-                myball.setPos([0.0,speed],'-')
-            if frameN < runtime:
-                # update the position of the player
-                myplayer.setPos([0,speed],'-')
-                
-            # draw player on screen
-            myplayer.draw()
+        mykb.reporting = False
+        gap_timer.reset()
+        gap_timer.add(dirchange)
+        
+        t_ball = core.getTime()
+        while gap_timer.getTime() < 0:
+            # ball flight straight
+            mykb.reporting = True
+            # update the position of the ball
+            myball.setPos([0.0,speed],'-')
+            mygoal.draw()
+            # draw keeper
+            mykeeper.draw()
+            # draw ball on screen
+            myball.draw()
+            # update window
+            mywin.flip()
+            if not key_hit:
+                for kb_event in mykb.getEvents():
+                    keypress = kb_event.char
+                    if keypress == 'n':
+                        # print response right
+                        mykeeper.setStart(mygoal.end)
+                        mykeeper.setEnd([mygoal.end[0]-keeper_cover,mygoal.end[1]])
+                    if keypress == 'v':
+                        #print response left
+                        mykeeper.setStart(mygoal.start)
+                        mykeeper.setEnd([mygoal.start[0]+keeper_cover,mygoal.start[1]])
+                    if keypress == 'v' or 'n':
+                        correct = check_correct(keypress,new_pos)
+                        mykb.reporting = False
+                        t_response = kb_event.time
+                        key_hit=True
+            if int(myball.pos[1]) == int(mygoal.start[1]):
+                break
+
+        myball.setPos([new_pos,0.0],'+')
+        t_change = core.getTime()
+        
+        last_rescue = core.Clock()
+        last_rescue.add(5.0)
+        
+        while not goal_reached:
+            # update the position of the ball
+            myball.setPos([0.0,speed],'-')
             # draw goal
             mygoal.draw()
             # draw keeper
@@ -316,41 +339,39 @@ def play_trial(mywin , trial_data, trial_id):
             myball.draw()
             # update window
             mywin.flip()
-            # check keyboard presses
             if not key_hit:
                 for kb_event in mykb.getEvents():
-                    if kb_event.char == 'n':
+                    keypress = kb_event.char
+                    if keypress == 'n':
                         # print response right
-                        mykb.reporting = False
                         mykeeper.setStart(mygoal.end)
                         mykeeper.setEnd([mygoal.end[0]-keeper_cover,mygoal.end[1]])
-                        keypress = 'n'
-                        key_hit = True
-                        t_response = kb_event.time
-                    if kb_event.char == 'x':
-                        mykb.reporting = False
-                        keypress = 'x'
-                        key_hit = True
-                        t_response = kb_event.time
-                        break
-                    if kb_event.char == 'v':
+                    if keypress == 'v':
                         #print response left
-                        mykb.reporting = False
                         mykeeper.setStart(mygoal.start)
                         mykeeper.setEnd([mygoal.start[0]+keeper_cover,mygoal.start[1]])
-                        keypress = 'v'
-                        key_hit = True
+                    if keypress == 'v' or 'n':
+                        correct = check_correct(keypress,new_pos)
+                        mykb.reporting = False
                         t_response = kb_event.time
-                mykb.reporting = False
+                        key_hit=True
+            # check keyboard presses
             if int(myball.pos[1]) == int(mygoal.start[1]):
                 t_goal = core.getTime()
-                if keypress == 'v' and new_pos<0 or keypress == 'n' and new_pos>0:
-                    feedback(0.5,'caught')
-                    resp_corr = 1
-                    trial_on = False
-                    break
+                if correct == 1:
+                    feedback(0.5, 'caught')
+                if correct == 0:
+                    feedback(0.5, 'missed')
+                if correct == 'na':
+                    feedback(0.5, 'too slow!!')
+                mykb.reporting = False
+                goal_reached   = True
+            
+            if last_rescue.getTime()>0:
+                goal_reached   = True
+                
         break
-    resp_data = pd.DataFrame(data = [[keypress,trial_id+1,t_start,t_set, t_ball, t_release, t_response, t_goal, t_change, new_pos, resp_corr]], columns = ['response','trial_nr','t_start','t_set','t_ball','t_release','t_response','t_goal','t_change','new_pos','correct'])
+    resp_data = pd.DataFrame(data = [[keypress,trial_id+1,t_start,t_set, t_ball, t_release, t_response, t_goal, t_change, new_pos, correct]], columns = ['response','trial_nr','t_start','t_set','t_ball','t_release','t_response','t_goal','t_change','new_pos','correct'])
     
     core.wait(0.5)
     

@@ -249,3 +249,61 @@ CoMo3_bin <- binned_data(CoMo3_data$ePT,CoMo3_data$correct,-0.3,0.3,0.1)
 
 
 ```
+
+Experiment 4 / sudden jump 
+
+```{r}
+file1  <- read.table("CoMo4ck1.txt",header = TRUE) 
+file2  <- read.table("CoMo4ck2.txt",header = TRUE)
+file3  <- read.table("CoMo4desck1.txt",header = TRUE)
+file4  <- read.table("CoMo4desck1.txt",header = TRUE)
+CoMo4_data   <- rbind(file1,file2)
+CoMo4_design <- rbind(file3,file4)
+
+id_rm        <- which(CoMo4_data$response != 'n' & CoMo4_data$response != 'v')
+id_pos       <- which(CoMo4_data$correct == 0)
+id_neg       <- which(CoMo4_data$correct == 1)
+
+CoMo4_data$correct[id_pos] <- c(1)
+CoMo4_data$correct[id_neg] <- c(0)
+
+CoMo4_data   <- CoMo4_data[-id_rm,]
+CoMo4_design <- CoMo4_design[-id_rm,]
+
+
+# NP          <- get_nd_time(CoMo4_data$t_response)
+
+# t_response is relative to the onset of the ball motion  
+CoMo4_data$PT     <- CoMo4_data$t_response - CoMo4_data$t_change
+CoMo4_data$gap    <- CoMo4_data$t_change - CoMo4_data$t_ball
+
+# check distribution of ePT
+summary(CoMo4_data$t_change)
+summary(CoMo4_data$PT)
+
+#ana 1 - correct answers as a function of gap time 
+CoMo4_dis <- binned_data(CoMo4_data$gap,CoMo4_data$correct,0,0.2,0.01)
+
+
+#ana 2 - reaction times as a function of distance
+#build a model, linear regression
+#Null model - explained by mean
+aov_CoMo4_rea_times <- aov(CoMo4_data$t_response ~ CoMo4_design$change_loc) 
+summary(aov_CoMo4_rea_times)
+
+#ana 3 - Frequencies of ePTs in correct/incorrect answers
+correct_CoMo4   <- CoMo4_data[which(CoMo4_data$correct==1),]
+incorrect_CoMo4 <- CoMo4_data[which(CoMo4_data$correct==0),]
+
+corr_his3   <- hist(correct_CoMo4$PT)
+
+incorr_his3 <- hist(incorrect_CoMo4$PT)
+
+
+#ana 4 - % correct answers as a function of ePT
+CoMo4_bin <- binned_data(CoMo4_data$PT,CoMo4_data$correct,-0.2,0.5,0.05)
+
+#ana 5 - left out so far
+
+
+```
