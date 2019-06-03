@@ -261,11 +261,6 @@ CoMo4_data   <- rbind(file1,file2)
 CoMo4_design <- rbind(file3,file4)
 
 id_rm        <- which(CoMo4_data$response != 'n' & CoMo4_data$response != 'v')
-id_pos       <- which(CoMo4_data$correct == 0)
-id_neg       <- which(CoMo4_data$correct == 1)
-
-CoMo4_data$correct[id_pos] <- c(1)
-CoMo4_data$correct[id_neg] <- c(0)
 
 CoMo4_data   <- CoMo4_data[-id_rm,]
 CoMo4_design <- CoMo4_design[-id_rm,]
@@ -276,10 +271,15 @@ CoMo4_design <- CoMo4_design[-id_rm,]
 # t_response is relative to the onset of the ball motion  
 CoMo4_data$PT     <- CoMo4_data$t_response - CoMo4_data$t_change
 CoMo4_data$gap    <- CoMo4_data$t_change - CoMo4_data$t_ball
+CoMo4_data$RT     <- CoMo4_data$t_response - CoMo4_data$t_ball
 
 # check distribution of ePT
 summary(CoMo4_data$t_change)
 summary(CoMo4_data$PT)
+
+id_rm2 <- which(CoMo4_data$PT>0.25)
+CoMo4_data   <- CoMo4_data[-id_rm2,]
+CoMo4_design <- CoMo4_design[-id_rm2,]
 
 #ana 1 - correct answers as a function of gap time 
 CoMo4_dis <- binned_data(CoMo4_data$gap,CoMo4_data$correct,0,0.2,0.01)
@@ -290,6 +290,8 @@ CoMo4_dis <- binned_data(CoMo4_data$gap,CoMo4_data$correct,0,0.2,0.01)
 #Null model - explained by mean
 aov_CoMo4_rea_times <- aov(CoMo4_data$t_response ~ CoMo4_design$change_loc) 
 summary(aov_CoMo4_rea_times)
+
+CoMo4_rea <- binned_data(CoMo4_data$RT,CoMo4_data$correct,0.0,0.5,0.05)
 
 #ana 3 - Frequencies of ePTs in correct/incorrect answers
 correct_CoMo4   <- CoMo4_data[which(CoMo4_data$correct==1),]
@@ -302,6 +304,7 @@ incorr_his3 <- hist(incorrect_CoMo4$PT)
 
 #ana 4 - % correct answers as a function of ePT
 CoMo4_bin <- binned_data(CoMo4_data$PT,CoMo4_data$correct,-0.2,0.5,0.05)
+
 
 #ana 5 - left out so far
 
