@@ -70,16 +70,16 @@ def drange(x,y,jump):
 ##########################################
 
 # path
-path_to_exp    = '/home/clara/Documents/projects/CompelledMovements/'
-path_to_dat    = path_to_exp + 'data/'
+path_to_exp    = 'C://Users//Clara//Documents//Projects//CompelledMovements//'
+path_to_dat    = path_to_exp + 'data//'
 
 # waiting times
 prep_time_pre  = 0.2
 prep_time_post = 0.2 ## not used 
 
 # repetition and blocks
-reps   = 4
-nblock = 10
+reps   = 1
+nblock = 1
 
 # screen
 window_size    = []
@@ -240,6 +240,7 @@ def play_trial(mywin , trial_data, trial_id):
             t_change     = 0
             t_response   = 0
             t_goal       = 0
+            score        = 0
             correct      = 'na'
             
             # set position of stimuli
@@ -365,10 +366,12 @@ def play_trial(mywin , trial_data, trial_id):
                 t_goal = core.getTime()
                 if correct == 1:
                     feedback(0.5, 'caught','+5')
+                    score = 5
                 if correct == 0:
                     feedback(0.5, 'missed','0')
                 if correct == 'na':
                     feedback(0.5, 'too slow!!','-10')
+                    score = -10
                 mykb.reporting = False
                 goal_reached   = True
             
@@ -380,7 +383,7 @@ def play_trial(mywin , trial_data, trial_id):
     
     core.wait(0.5)
     
-    return resp_data
+    return resp_data, score
 
 # define a function that gets the trial information and plays alls trial in a row
 # play all trials in a block
@@ -391,17 +394,20 @@ def play_block(full_df, block_id):
     # initialize data frame
     block_data = full_df.query('block == %s' %(block_id))
     trial_number = len(block_data)
+    block_score  = 0
 
     for trial in range(trial_number):
         trial_data = block_data.query('trial_nr == %s'%(trial+1))
         # play trials and get the pressed keys
-        resp_dat   = play_trial(mywin,trial_data,trial)
+        resp_dat, score   = play_trial(mywin,trial_data,trial)
         responses.append(resp_dat)
         
+        block_score = block_score + score
         # clear screen after trial is played
         mywin.flip()
         core.wait(0.5)
     all_responses = pd.concat(responses)
+    feedback(1.5, 'You scored %s' %(block_score),' ')
     # make data available
     return all_responses
 
