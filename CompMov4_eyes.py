@@ -1,19 +1,30 @@
 # Compelled movements - Sudden position jump 
 # Clara Kuper 2019
 #########################################
-#########################################
-# To Dos:
+##To Dos#################################
+
 # release key tracking
-# ioHub needs to work on PC
-# stimulus moves straight, then jumps to the left
-# /to the right
-# distance to the goal is fixed
-##########################################
-##########################################
-##### Changes/Future Versions ############
-##########################################
+# eyetracking
+
+# Initialize the EyeLink system, and open a link connection to the EyeLink tracker.
+# Check the display mode, create a full-screen window, and initialize the calibration system.
+# Send any configuration commands to the EyeLink tracker to prepare it for the experiment
+# Set an EDF file name, and open an EDF data file (stored on the eye tracker)
+# Record one or more blocks of trials.
+# Each block typically begins with tracker setup (camera setup and calibration), and then several trials are run.
+# Close the EDF data file.
+# If desired, copy it via the link to the local computer. 
+# Close the window, and the link connection to the eye tracker. 
+
+#########################################
+
+#########################################
+##### Changes/Future Versions ###########
+#########################################
+
 # Probabilty
-##########################################
+
+#########################################
 
 # Setup of the environment
 # Import relevant functions
@@ -25,6 +36,9 @@ import random as rd
 import numpy as np
 import pandas as pd
 from psychopy.iohub.client import launchHubServer
+
+
+io = launchHubServer(psychopy_monitor_name = 'default')
 
 ###################################
 ###### Functions for setup ########
@@ -67,9 +81,9 @@ def drange(x,y,jump):
     return out
 
 
-##########################################
-## Set Parameters for experiment #########
-##########################################
+###################################
+## Set Parameters for experiment ##
+###################################
 
 # path
 path_to_exp    = 'C://Users//Clara//Documents//Projects//CompelledMovements//'
@@ -83,15 +97,28 @@ prep_time_post = 0.2 ## not used
 reps   = 1
 nblock = 1
 
-# screen
-window_size    = []
-fullscreen     = True
-background_rgb = [1,1,1]
-scrcenter      = [0,0]
 
-#########################
-## Stimulus parameters ##
-#########################
+##################
+## Setup screen ##
+##################
+
+mykb    = io.devices.keyboard
+display = pl.getDisplayInformation()
+mykb.reporting = False
+
+disp_pix       = [display.width, display.height]
+fullscreen     = True
+background_rgb = [1,1,1] #white
+scrcenter      = [0,0]
+scrdist        = 52
+
+monitor_name   = ''
+
+fix_bound_px  = 0.5
+
+###################
+## Setup stimuli ##
+###################
 
 # the speed of the ball
 speed          = 0.5
@@ -116,23 +143,24 @@ jitter_time    = drange(0.3,1.0,0.15)
 # get participant data
 data_file, name, session, exp = get_data(path_to_dat)
 
+edf_filename = 'et_' + name + session + '.edf'
 
 
-########################
-## initialize stimuli ##
-########################
+####################
+## Tracker Setup ###
+####################
 
-io      = launchHubServer(psychopy_monitor_name = 'default')
-mykb    = io.devices.keyboard
-display = io.devices.display
-mykb.reporting = False
-mywin    = visual.Window(display.getPixelResolution(), allowGUI = True, fullscr = fullscreen, monitor = 'testMonitor', units = 'cm')
-mywin.MouseVisible = False
-mygoal   = visual.Line(win = mywin, start = (0,0),end = (0,0))
-myball   = visual.GratingStim(win=mywin, mask = 'circle', pos = [0,0], size = 1, sf = 0, color='white') 
-mykeeper = visual.Line(win = mywin, start = (0,0),end = (0,0),lineColor = 'black')
-trial_timer    = core.Clock()
-gap_timer      = core.Clock()
+tracking = False
+
+if tracking:
+    tracker = pl.EyeLink('100.1.1.1')
+    sampling_rate = 1000
+    import online_sac_detect_module
+    sac_event = online_sac_detect_module.online_sac_detect()
+    sac_event.set_parameters(samp_rate = sampling_rate )
+else:
+    tracker = pl.EyeLink(None)
+
 
 #################
 ## Make design ##
@@ -176,6 +204,110 @@ full_df       = pd.concat(blocks)
 
 # save design 
 full_df.to_csv(path_to_dat + exp + 'des' + name + session + ".txt",delimiter='\t', encoding='utf-8', index = False)
+
+###################################
+## Setup display and calibration ##
+###################################
+
+def set_screen(): # screen properties
+    
+    # change monitor settings:
+    mon = monitors.Monitor(monitor_name)
+    mon.setDistance(scrdist)
+    mon.setSizePix(disp_pix)
+    
+    fix_bound_start  = monitorunittools.deg2pix(fix_bound, mon)
+    fix_bound_end    = monitorunittools.deg2pix(fix_bound+0.5, mon)
+    
+
+    ########################
+    ## initialize stimuli ##
+    ########################
+    
+    mywin    = visual.Window(disp_pix, allowGUI = True, fullscr = fullscreen, monitor = 'testMonitor', units = 'pix')
+    
+    if eye_track == True:
+        mymouse = event.Mouse(visible=False, newPos=scrcenter, win=win)
+    else:
+        mymouse = event.Mouse(visible=True, win=win)
+        
+    mygoal   = visual.Line(win = mywin, start = (0,0),end = (0,0))
+    myball   = visual.GratingStim(win=mywin, mask = 'circle', pos = [0,0], size = 1, sf = 0, color='white') 
+    mykeeper = visual.Line(win = mywin, start = (0,0),end = (0,0),lineColor = 'black')
+    trial_timer    = core.Clock()
+    gap_timer      = core.Clock()
+ 
+    win.flip() # initiate first screen paint
+    
+    setup_eye_track()
+
+
+def setup_eye_track():
+
+    # Start file and write first command
+    tracker.openDataFile(edf_filename)
+    pylink.flushGetkeyQueue()
+    tracker.sendCommand("add_file_preamble_text 'Psychopy Test'")
+    
+    #??? Whats that doing?##
+    genv = EyeLinkCoreGraphicsPsychoPy(tk, win) 
+    pylink.openGraphicsEx(genv)
+    
+    # Tracker in offline mode
+    tracker.setOfflineMode()
+    
+    #######################
+    ## Tracker settings ###
+    #######################
+    
+    # Set sampling rate
+    tracker.sendCommand('sample_rate 1000')
+    # Display resolution
+    tracker.sendCommand("screen_pixel_coords = 0 0 %d %d" % (screen_w-1, screen_h-1))
+    tracker.sendMessage("DISPLAY_COORDS = 0 0 %d %d" % (screen_w-1, screen_h-1))
+    tracker.sendMessage("DISPLAY_COORDS = 0 0 %d %d" % (screen_w-1, screen_h-1))
+    
+    # Calibration type
+    tracker.sendCommand("calibration_type = HV9")
+    tracker.sendCommand("calibration_area_proportion 0.7 0.7")
+    tracker.sendCommand("validation_area_proportion  0.7 0.7")
+    
+    # Tracker model
+    eyelinkVer = tracker.getTrackerVersion()
+    
+    #turn off scenelink camera stuff (EyeLink II/I only)
+    if eyelinkVer == 2: tracker.sendCommand("scene_camera_gazemap = NO")
+    # Parse Events using "GAZE" (or "HREF") data
+    tracker.sendCommand("recording_parse_type = GAZE")
+    # Online parser configuration: 0-> standard/cognitve, 1-> sensitive/psychophysiological
+    if eyelinkVer>=2: tracker.sendCommand('select_parser_configuration 0')
+    # get Host tracking software version
+    hostVer = 0
+    if eyelinkVer == 3:
+        tvstr = tracker.getTrackerVersionString()
+        vindex = tvstr.find("EYELINK CL")
+        hostVer = int(float(tvstr[(vindex + len("EYELINK CL")):].strip()))
+        
+    # EVENT and SAMPLE data stored in EDF/retrievable from link
+    
+    tracker.sendCommand("file_event_filter = LEFT,RIGHT,BLINK,MESSAGE")
+    tracker.sendCommand("link_event_filter = LEFT,RIGHT,BLINK,MESSAGE")
+    if hostVer>=4:
+        tracker.sendCommand("file_sample_data = LEFT,RIGHT,GAZE,AREA,GAZERES,STATUS,HTARGET,INPUT")
+        tracker.sendCommand("link_sample_data = LEFT,RIGHT,GAZE,GAZERES,AREA,STATUS,HTARGET,INPUT")
+    else:
+        tracker.sendCommand("file_sample_data = LEFT,RIGHT,GAZE,AREA,GAZERES,STATUS,INPUT")
+        tracker.sendCommand("link_sample_data = LEFT,RIGHT,GAZE,GAZERES,AREA,STATUS,INPUT")
+        
+    fix_box_size = fix_bound_px
+
+def calibr():
+    global eye_tracked
+    win.flip()
+    tk.doTrackerSetup()
+    #determine which eye(s) are available
+    eye_tracked = tk.eyeAvailable()
+    if eye_tracked==2: eye_tracked = 1
 
 ###########################################
 ### functions for timing and presenting ###
@@ -226,6 +358,22 @@ def play_trial(mywin , trial_data, trial_id):
     serial presentation of stimuli with given parameter, monitor timing
     returns information about participant behaviour
     '''
+    ########################
+    ## Eye Tracking to Do ##
+    ########################
+    
+    #Create a data message (TRIALID) and title to identify the trial
+    #Create background graphics on the eye tracker display
+    #Perform a drift correction, or display a fixation target
+    #Start the EyeLink recording to the EDF file
+    #Display graphics for the trial.  (These may have been prepared as a bitmap before the trial).
+    #Loop  until  the  trial  time  is  up,  a  button  is  pressed on the tracker, or the recording is interrupted from  the  tracker.
+    #The  display  may  be  changed  as  required  for  the  trial  (i.e.  moving  a  target  to elicit saccades) in this loop.
+    #Real-time eye-position and saccade/fixation data are also available for gaze-contingent displays and control.
+    #Stop  recording,  and  handle  any  special  exit  conditions.
+    #Report  trial  success  or  errors  by  adding messages to the EDF file.
+    #Optionally, play back the data from the trial for on-line analysis. 
+    
     
     # define a timer
     trial_prepared = False
@@ -397,6 +545,8 @@ def play_block(full_df, block_id):
     block_data = full_df.query('block == %s' %(block_id))
     trial_number = len(block_data)
     block_score  = 0
+    
+    calibr()
 
     for trial in range(trial_number):
         trial_data = block_data.query('trial_nr == %s'%(trial+1))

@@ -17,10 +17,8 @@
 
 # Setup of the environment
 # Import relevant functions
-from __future__ import absolute_import, division, print_function, unicode_literals
 from psychopy import visual, core, event, gui
 import os as os
-import pylink as pl
 import random as rd
 import numpy as np
 import pandas as pd
@@ -40,7 +38,7 @@ def get_data(path_to_dat):
     '''
     
     while True:
-        info = {'Participant':'Your Code','Experiment':'CoMo4','Session_No':0}
+        info = {'Participant':'Your Code','Experiment':'LNDW','Session_No':0}
         infoDlg = gui.DlgFromDict(dictionary = info, title = 'participant data', fixed = ['Experiment'])
         
         exp  = info['Experiment']
@@ -81,7 +79,7 @@ prep_time_post = 0.2 ## not used
 
 # repetition and blocks
 reps   = 1
-nblock = 1
+nblock = 2
 
 # screen
 window_size    = []
@@ -109,14 +107,15 @@ dir_change     = drange(0.0, 0.6, 0.1)
 # jitter time
 jitter_time    = drange(0.3,1.0,0.15)
 
+# rank list
+rank           = []
+
 #################
 ## Participant ##
 #################
 
 # get participant data
-data_file, name, session, exp = get_data(path_to_dat)
-
-
+data_file, filename, session, exp = get_data(path_to_dat)
 
 ########################
 ## initialize stimuli ##
@@ -157,17 +156,44 @@ for rep in range(reps):
 
 ntrials = len(dfs)
 
+
+dfs_2 = []
+cond_i = 0
+
+for rep in range(reps):
+    for shift in shift_size:
+        for dir_ch in dir_change:
+            cond_i = cond_i + 1
+            trial_goal_dis   = goal_distance
+            trial_speed      = speed
+            trial_ball       = ball_start
+            trial_goal_size  = goal_size
+            trial_jitter     = np.random.choice(jitter_time,1)[0]
+            if cond_i%3 == 0:
+                shift = -5
+            trial_shift      = shift
+            
+            df = pd.DataFrame(data = [[cond_i,trial_speed,trial_ball,trial_goal_dis,trial_goal_size,trial_jitter,dir_ch, trial_shift]], columns = ['trial','speed','ball_pos','distance','broad','jitter','gap_time', 'shift_pos'])
+            dfs_2.append(df)
+
 # arrange in blocks
 
 blocks = []
+repl   = shift_size[0]
+repl_by= shift_size[1]
+
 
 for block in range (nblock):
-    np.random.shuffle(dfs)
+    if block == 1:
+        matrix = dfs_2
+    else:
+        matrix = dfs
+    np.random.shuffle(matrix)
     for trial in range(ntrials):
-        df_temp = dfs[trial]
+        df_temp = matrix[trial]
         df_temp['trial_nr'] = trial+1
         dfs[trial]  = df_temp
-    block_temp = pd.concat(dfs)
+    block_temp = pd.concat(matrix)
     block_temp['block']= block
     
     blocks.append(block_temp)
@@ -175,7 +201,7 @@ for block in range (nblock):
 full_df       = pd.concat(blocks)
 
 # save design 
-full_df.to_csv(path_to_dat + exp + 'des' + name + session + ".txt",delimiter='\t', encoding='utf-8', index = False)
+full_df.to_csv(path_to_dat + exp + 'des' + filename + session + ".txt",sep='\t', encoding='utf-8', index = False)
 
 ###########################################
 ### functions for timing and presenting ###
@@ -217,11 +243,89 @@ def check_correct(resp,new_loc):
         else: 
             return 0
 
-##################################
-##### Single Trial Function ######
-##################################
+def ask_for_text(intro):
+    
+    inputText = ''
+    mykb.getEvents()
+    continueRoutine = True
+    mykb.reporting = True
+    
+    while continueRoutine:
+        
+        visual.TextStim(win = mywin, text = intro, pos = (0,0)).draw()
+        visual.TextStim(win = mywin, text = (inputText), pos = (0,-2)).draw()
+        mywin.flip()
+        
+        for kb_event in mykb.getEvents():
+            
+            if kb_event.type == 22:
+                
+                if kb_event.key == 'return':
+                    # pressing RETURN means time to stop
+                    continueRoutine = False
+                    break
+                elif kb_event.key == 'backspace':
+                    inputText = inputText[:-1]
+                    
+                elif kb_event.key == 'space':
+                    inputText += ' '
+                else:
+                    if len(kb_event.char) == 1:
+                        # we only have 1 char so should be a normal key, 
+                        # otherwise it might be 'ctrl' or similar so ignore it
+                        inputText += kb_event.char
+    mykb.reporting = False
+    return inputText
 
-def play_trial(mywin , trial_data, trial_id):
+def show_menue():
+    go      = False
+    LNDW    = True
+    pressed = False
+    visual.TextStim(win = mywin,text = 'Willst Du ein Spiel spielen? Dann drücke \'g\' und es geht los!', pos = (0,0)).draw()
+    mywin.flip()
+    mykb.reporting = True
+    player_name    = ''
+    age            = ''
+    
+    while not pressed:
+        for kb_event in mykb.getEvents():
+            if kb_event.char == 'g':
+                player_name = ask_for_text('Cool! Wer spielt denn?')
+                age  = ask_for_text('Und wie alt bist Du, %s?' %(player_name))
+                go = True
+                pressed = True
+            if kb_event.key == 'return':
+                LNDW = False
+                pressed = True
+    return go, LNDW, player_name, age
+    
+
+def play_again():
+    mywin.flip()
+    resp = False
+    visual.TextStim(win = mywin,text = 'Willst Du nochmal spielen? Dann drücke \'j\' (ja) oder \'n\' (nein)', pos = (0,0)).draw()
+    mywin.flip()
+    mykb.reporting = True
+    while not resp:
+        for kb_event in mykb.getEvents():
+            if kb_event.char == 'n':
+                visual.TextStim(win = mywin,text = 'War schön mit Dir! Tschüss!', pos = (0,0)).draw()
+                mywin.flip()
+                go = False
+                resp = True
+            if kb_event.char == 'j':
+                visual.TextStim(win = mywin,text = 'Cool, dann nochmal!', pos = (0,0)).draw()
+                mywin.flip()
+                go = True
+                resp = True
+    return go
+
+
+#################################
+#### Single Trial Function ######
+#################################
+
+def play_trial(mywin , trial_data, trial_id, player_name,player_age):
     '''
     serial presentation of stimuli with given parameter, monitor timing
     returns information about participant behaviour
@@ -280,7 +384,7 @@ def play_trial(mywin , trial_data, trial_id):
     myball.draw()
     t_start = mywin.flip()
     
-    keys = io.devices.keyboard.waitForKeys(keys = ['b'])
+    keys = mykb.waitForKeys(keys = ['b'])
     mykb.reporting = False
     # draw goal
     mygoal.draw()
@@ -367,12 +471,12 @@ def play_trial(mywin , trial_data, trial_id):
             if int(myball.pos[1]) == int(mygoal.start[1]):
                 t_goal = core.getTime()
                 if correct == 1:
-                    feedback(0.5, 'caught','+5')
+                    feedback(0.5, 'Gut gemacht!','+5')
                     score = 5
                 if correct == 0:
-                    feedback(0.5, 'missed','0')
+                    feedback(0.5, 'Daneben...','0')
                 if correct == 'na':
-                    feedback(0.5, 'too slow!!','-10')
+                    feedback(0.5, 'Zu langsam!!','-10')
                     score = -10
                 mykb.reporting = False
                 goal_reached   = True
@@ -381,7 +485,7 @@ def play_trial(mywin , trial_data, trial_id):
                 goal_reached   = True
                 
         break
-    resp_data = pd.DataFrame(data = [[keypress,trial_id+1,t_start,t_set, t_ball, t_release, t_response, t_goal, t_change, new_pos, correct]], columns = ['response','trial_nr','t_start','t_set','t_ball','t_release','t_response','t_goal','t_change','new_pos','correct'])
+    resp_data = pd.DataFrame(data = [[keypress,trial_id+1,t_start,t_set, t_ball, t_release, t_response, t_goal, t_change, new_pos, correct, player_name, player_age]], columns = ['response','trial_nr','t_start','t_set','t_ball','t_release','t_response','t_goal','t_change','new_pos','correct','name','age'])
     
     core.wait(0.5)
     
@@ -390,18 +494,20 @@ def play_trial(mywin , trial_data, trial_id):
 # define a function that gets the trial information and plays alls trial in a row
 # play all trials in a block
 
-def play_block(full_df, block_id):
+def play_block(full_df, block_id,player_name,player_age,rank):
+    
     responses = []
     # play all trials in one block
     # initialize data frame
     block_data = full_df.query('block == %s' %(block_id))
     trial_number = len(block_data)
     block_score  = 0
+    io.clearEvents('all')
 
     for trial in range(trial_number):
         trial_data = block_data.query('trial_nr == %s'%(trial+1))
         # play trials and get the pressed keys
-        resp_dat, score   = play_trial(mywin,trial_data,trial)
+        resp_dat, score   = play_trial(mywin,trial_data,trial,player_name,player_age)
         responses.append(resp_dat)
         
         block_score = block_score + score
@@ -409,44 +515,92 @@ def play_block(full_df, block_id):
         mywin.flip()
         core.wait(0.5)
     all_responses = pd.concat(responses)
-    feedback(1.5, 'You scored %s' %(block_score),' ')
+    rank.append(block_score)
+    rank.sort(reverse = True)
+    feedback(1.5, 'Deine Punkte: %s' %(block_score),' ')
+    feedback(1.5, 'Du bist auf Platz {} von {}'.format(int(np.mean(rank.index(block_score))+1),(len(rank))), ' ')
     # make data available
-    return all_responses
+    return all_responses,rank
 
 
 # Run the entire experiment
 def play_experiment(blockn):
     # initialize data frame
-    mywin.flip()
-    data = []
-    # for all blocks in the experiment
-    for block in range(blockn):
-        
-        # define the parameters based on the design matrix
-        block_intro(block,mywin)
+    LNDW = True
+    rank = []
+    
+    while LNDW:
+        #clear screen
         mywin.flip()
+        go, LNDW, player_name, age = show_menue()
         
-        key_was_down_x = event.getKeys(keyList=['x'],timeStamped=True)
-        core.wait(0.5)
-        if key_was_down_x:
-            play = False
-        event.waitKeys(keyList=['g'])
+        data = []
         
-        
-        # play all blocks
-        block_data = play_block(full_df,block)
-        data.append(block_data)
-        
-        # clear screen after block is over and wait a little bit
-        mywin.flip()
-        core.wait(3.0)
-    complete_data       = pd.concat(data)
+        while go:
+            # for all blocks in the experiment
+            for block in range(blockn):
+                
+                if block == 0:
+                    # define the parameters based on the design matrix
+                    mykb.reporting = True
+                    visual.TextStim(win = mywin,text = 'Cool, los geht\'s! Wir spielen ein Torwart-Spiel. Mit \'g\' geht es weiter.', pos = (0,0)).draw()
+                    mywin.flip()
+                    mykb.waitForKeys(keys = ['g'],etype = mykb.KEY_PRESS)
+                    visual.TextStim(win = mywin,text = 'Um im Spiel den Torwart zu plazieren, drücke \' b\'. Dann beginnt die Runde.', pos = (0,0)).draw()
+                    mywin.flip()
+                    mykb.waitForKeys(keys = ['g'],etype = mykb.KEY_PRESS)
+                    visual.TextStim(win = mywin,text = 'Ein Ball bewegt sich dann auf das Tor zu, der zu einem zufälligen Zeitpunkt nach links oder rechts springt.', pos = (0,0)).draw()
+                    mywin.flip()
+                    mykb.waitForKeys(keys = ['g'],etype = mykb.KEY_PRESS)
+                    visual.TextStim(win = mywin,text = 'Mit den Tasten \' v\' und \'n\' bewegst du den Torwart nach links und rechts.', pos = (0,0)).draw()
+                    mywin.flip()
+                    mykb.waitForKeys(keys = ['g'],etype = mykb.KEY_PRESS)
+                    visual.TextStim(win = mywin,text = '5 Punkte gibt es, wenn du den Ball fängst, 0 Punkte, wenn du dich in die falsche Richtung bewegst und -10 Punkte, wenn du zu langsam bist.', pos = (0,0)).draw()
+                    mywin.flip()
+                    mykb.waitForKeys(keys = ['g'],etype = mykb.KEY_PRESS)
+                    visual.TextStim(win = mywin,text = 'Achtung! Der Ball springt manchmal erst sehr spät. Denke daran: Eine falsche Antwort (0 Punkte) ist besser als keine Antwort (-10 Punkte).', pos = (0,0)).draw()
+                    mywin.flip()
+                    mykb.waitForKeys(keys = ['g'],etype = mykb.KEY_PRESS)
+                    visual.TextStim(win = mywin,text = 'Fertig?', pos = (0,0)).draw()
+                    mywin.flip()
+                    mykb.waitForKeys(keys = ['g'],etype = mykb.KEY_PRESS)
+                    visual.TextStim(win = mywin,text = 'Los!', pos = (0,0)).draw()
+                if block == 1:
+                    mykb.reporting = True
+                    visual.TextStim(win = mywin,text = 'Wir versuchen es nochmal - gleiches Spiel, aber der Ball springt jetzt öfter nach links als nach rechts.', pos = (0,0)).draw()
+                    mywin.flip()
+                    mykb.waitForKeys(keys = ['g'],etype = mykb.KEY_PRESS)
+                    visual.TextStim(win = mywin,text = 'Viel Spaß!', pos = (0,0)).draw()
+                    mywin.flip()
+                io.clearEvents('all')
+                mykb.getKeys(clear=True)
+                mykb.reporting = False
+                mywin.flip()
+                core.wait(0.5)
+                
+                # play all blocks
+                block_data,rank = play_block(full_df,block,player_name,age,rank)
+                data.append(block_data)
+                
+                # clear screen after block is over and wait a little bit
+                mywin.flip()
+                core.wait(3.0)
+            complete_data       = pd.concat(data)
+            
+            str_data            = complete_data.to_string()
+            
+
+            with open("backup.txt", "a") as myfile:
+                myfile.write(str_data)
+            
+            go = play_again()
+            
     return complete_data
 
 
 # Play the experiment:
 response_data = play_experiment(nblock)
-response_data.to_csv(data_file, delimiter='\t', encoding='utf-8', index = False)
+response_data.to_csv(data_file, sep ='\t', encoding = 'utf-8', index = False)
 
 # end and close after 3 secs
 core.wait(1.0)
