@@ -203,7 +203,7 @@ for block in range (nblock):
 full_df       = pd.concat(blocks)
 
 # save design 
-full_df.to_csv(path_to_dat + exp + 'des' + name + session + ".txt",delimiter='\t', encoding='utf-8', index = False)
+full_df.to_csv(path_to_dat + exp + 'des' + name + session + ".txt",sep='\t', encoding='utf-8', index = False)
 
 ###################################
 ## Setup display and calibration ##

@@ -70,16 +70,16 @@ def drange(x,y,jump):
 ##########################################
 
 # path
-path_to_exp    = '/home/clara/Documents/projects/CompelledMovements'
-path_to_dat    = path_to_exp + '/data/'
+path_to_exp    = 'C:/Users/Clara Q/Documents/Projects/2019 Compelled Saccades/CompelledMovements'
+path_to_dat    = path_to_exp + '/data'
 
 # waiting times
 prep_time_pre  = 0.2
 prep_time_post = 0.2 ## not used 
 
 # repetition and blocks
-reps   = 2
-nblock = 10
+reps   = 1
+nblock = 1
 
 # screen
 window_size    = []
@@ -127,13 +127,17 @@ data_file, name, session, exp = get_data(path_to_dat)
 io      = launchHubServer(psychopy_monitor_name = 'default')
 mykb    = io.devices.keyboard
 display = io.devices.display
+mytouch = io.devices.mouse
 mykb.reporting = False
 mywin    = visual.Window(display.getPixelResolution(), allowGUI = True, fullscr = fullscreen, monitor = 'testMonitor', units = 'cm')
-mywin.MouseVisible = False
-mygoal   = visual.Line(win = mywin, start = (0,0),end = (0,0))
+##mygoal   = visual.Line(win = mywin, start = (0,0),end = (0,0))
+goal_left = visual. Circle(mywin,radius=0.5,fillColor=[1,1,1])
+goal_right = visual. Circle(mywin,radius=0.5,fillColor=[1,1,1])
+goal_start = visual. Circle(mywin,radius=0.5,fillColor=[1,1,1])
 myball   = visual.GratingStim(win=mywin, mask = 'circle', pos = [0,0], size = 1, sf = 0, color='red') 
-mykeeper = visual.Line(win = mywin, start = (0,0),end = (0,0),lineColor = 'black')
+##mykeeper = visual.Line(win = mywin, start = (0,0),end = (0,0),lineColor = 'black')
 myplayer = visual.GratingStim(win=mywin, mask = 'circle', pos = [0,0], size = 1, sf = 0, color='blue')
+mymouse  = event.Mouse(visible = False)
 
 #################
 ## Make design ##
@@ -235,11 +239,14 @@ def play_trial(mywin , trial_data, trial_id):
             # set position of stimuli
             myplayer.setPos([0,int(trial_data['player_pos'])])
             myball.setPos([0,int(trial_data['ball_pos'])])
-            mygoal.setStart([-int(trial_data['broad']),-int(trial_data['distance'])])
-            mygoal.setEnd([+int(trial_data['broad']),-int(trial_data['distance'])])
-            keeper_cover = int(trial_data['broad'])
-            mykeeper.setStart([mygoal.start[0]+(keeper_cover/2),mygoal.start[1]])            
-            mykeeper.setEnd([mygoal.end[0]-(keeper_cover/2),mygoal.start[1]])
+            goal_left.setPos([-int(trial_data['broad']),-int(trial_data['distance'])])
+            goal_right.setPos([+int(trial_data['broad']),-int(trial_data['distance'])])
+            goal_start.setPos([0,-int(trial_data['distance'])])
+##            #mygoal.setStart([-int(trial_data['broad']),-int(trial_data['distance'])])
+##            #mygoal.setEnd([+int(trial_data['broad']),-int(trial_data['distance'])])
+##           #keeper_cover = int(trial_data['broad'])
+##            #mykeeper.setStart([mygoal.start[0]+(keeper_cover/2),mygoal.start[1]])            
+##            #mykeeper.setEnd([mygoal.end[0]-(keeper_cover/2),mygoal.start[1]])
             # reset answers
             key_hit = False
             # reset keyboard
@@ -248,7 +255,7 @@ def play_trial(mywin , trial_data, trial_id):
             # How long does the player move towards the ball
             runtime   = (myplayer.pos[1]-myball.pos[1])/speed
             # How long does the ball move
-            ballfly   = (myball.pos[1]-mygoal.start[1])/speed
+            ballfly   = (myball.pos[1]-goal_left.pos[1])/speed
             # When does the ball change direction
             dirchange = (myball.pos[1]-trial_data['change_loc'].values)/speed
             # How long are both times together
@@ -267,20 +274,28 @@ def play_trial(mywin , trial_data, trial_id):
     # draw player on screen
     myplayer.draw()
     # draw goal
-    mygoal.draw()
+    goal_left.draw
+    goal_right.draw()
+    goal_start.draw()
+##    mygoal.draw()
     # draw ball on screen
     myball.draw()
 
     t_start = mywin.flip()
-    keys = io.devices.keyboard.waitForKeys(keys = ['b'])
+    
+    while True:
+        touchPos = mytouch.getPosition()
+        if goal_start.contains(touchPos):
+            break
+        core.wait(0.001)
     
     mykb.reporting = False
     # draw player on screen
     myplayer.draw()
     # draw goal
-    mygoal.draw()
+##     mygoal.draw()
     # draw keeper
-    mykeeper.draw()
+##    mykeeper.draw()
     # draw ball on screen
     myball.draw()
     t_set = mywin.flip()
@@ -312,9 +327,9 @@ def play_trial(mywin , trial_data, trial_id):
             # draw player on screen
             myplayer.draw()
             # draw goal
-            mygoal.draw()
+##            mygoal.draw()
             # draw keeper
-            mykeeper.draw()
+##            mykeeper.draw()
             # draw ball on screen
             myball.draw()
             # update window
@@ -325,8 +340,8 @@ def play_trial(mywin , trial_data, trial_id):
                     if kb_event.char == 'n':
                         # print response right
                         mykb.reporting = False
-                        mykeeper.setStart(mygoal.end)
-                        mykeeper.setEnd([mygoal.end[0]-keeper_cover,mygoal.end[1]])
+##                        mykeeper.setStart(mygoal.end)
+##                       mykeeper.setEnd([mygoal.end[0]-keeper_cover,mygoal.end[1]])
                         keypress = 'n'
                         key_hit = True
                         t_response = kb_event.time
@@ -339,13 +354,13 @@ def play_trial(mywin , trial_data, trial_id):
                     if kb_event.char == 'v':
                         #print response left
                         mykb.reporting = False
-                        mykeeper.setStart(mygoal.start)
-                        mykeeper.setEnd([mygoal.start[0]+keeper_cover,mygoal.start[1]])
+##                        mykeeper.setStart(mygoal.start)
+##                        mykeeper.setEnd([mygoal.start[0]+keeper_cover,mygoal.start[1]])
                         keypress = 'v'
                         key_hit = True
                         t_response = kb_event.time
                 mykb.reporting = False
-            if int(myball.pos[1]) == int(mygoal.start[1]):
+##            if int(myball.pos[1]) == int(mygoal.start[1]):
                 t_goal = core.getTime()
                 if keypress == 'v' and sign == '-' or keypress == 'n' and sign == '+':
                     feedback(0.5,'caught')
