@@ -1,7 +1,9 @@
-function design = genDesign(vpcode)
+function genDesign(vpcode)
 %
 % 2017 by Martin Rolfs
 % 2019 mod by Clara Kuper
+
+global design 
 
 % randomize random
 rand('state',sum(100*clock));
@@ -27,6 +29,9 @@ design.fixDurJ   = 0.5; % Additional jitter to fixation
 
 design.iti       = 0.2; % Inter stimulus interval
 
+
+
+
 if design.test
     timParams = load('subject_timParams.mat'); % load a matfile with subject name and code
     design.jumpAfter = timParams.jumpAfter;    % time when target jumps
@@ -37,7 +42,6 @@ else
     design.alResT    = 1.0;      % Allowed response time
     design.alMovT    = 1.0;      % Allowed movement time
 end
-
     
 
 % overall information %
@@ -52,8 +56,10 @@ design.nTrials = 10;
 % conditions
 design.goalPos    = [1,2]; % 1 is left, 2 is right goal
 design.ballMoved  = -100;  % ball moved relative from fixation point
-
 design.stimsize   = 20;
+design.move_at_speed     = 5;     % how many pixels does the ball cross with each jump?
+    
+
 
 % build
 for b = 1:design.nBlocks
