@@ -58,6 +58,8 @@ function setScreens
   
   visual.textCol = visual.white;
   
+  visual.textCol = visual.white
+  
   % Open windows
   [visual.window, visual.windowRect] = PsychImaging('OpenWindow', scr.expScreen, visual.black);
   [visual.xCenter, visual.yCenter] = RectCenter(visual.windowRect);

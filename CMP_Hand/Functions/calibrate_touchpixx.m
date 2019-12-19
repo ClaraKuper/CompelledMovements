@@ -95,6 +95,7 @@ function calibrate_touchpixx(reps)
      DrawFormattedText(visual.window, 'Calibration failed, will repeat', textCol);
      Screen('Flip', visual.window);
      WaitSecs(1)
+
     end 
   end
   % Calculate linear mapping between touch coordinates and display coordinates
