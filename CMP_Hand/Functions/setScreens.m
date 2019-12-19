@@ -1,13 +1,13 @@
 % Set up screens
 function setScreens
 
-  global setting scr visual
+  global settings scr visual
 
   AssertOpenGL;
 
   % in case a test version is running on a different screen with
   % worse syncing properties
-  if setting.TEST
+  if settings.TEST
       Screen('Preference', 'SkipSyncTests', 1);
   end
 
@@ -39,7 +39,7 @@ function setScreens
       error('Color depth per channel is set incorrectly.\nIt should be: %d', res.pixelSize/3);
   end
   
-  switch setting.MODE
+  switch settings.MODE
     case 1 % touchPixx
       % initialize the touchpixx 
       % Open datapixx and init PsychImaging
@@ -53,12 +53,14 @@ function setScreens
       mode = 'link';
   end
   
-  visual.white = WhiteIndex(screenNumber);
-  visual.black = BlackIndex(screenNumber);
+  visual.white = WhiteIndex(scr.expScreen);
+  visual.black = BlackIndex(scr.expScreen);
+  
+  visual.textCol = visual.white;
   
   % Open windows
-  [visual.window, visual.windowRect] = PsychImaging('OpenWindow', screenNumber, black);
-  [visual.xCenter, visual.yCenter] = RectCenter(windowRect);
+  [visual.window, visual.windowRect] = PsychImaging('OpenWindow', scr.expScreen, visual.black);
+  [visual.xCenter, visual.yCenter] = RectCenter(visual.windowRect);
   Screen('BlendFunction', visual.window, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
   visual.winWidth = visual.windowRect(3) - visual.windowRect(1);
@@ -79,7 +81,7 @@ function setScreens
   visual.goals     = [visual.goalPos1;visual.goalPos2];
   visual.goalColor = visual.white;
   visual.goalSize  = visual.ballSize;
-  visual.range_accept = 100;
+  visual.range_accept = 25;
         
-        
+  visual.textCol   =  visual.white;     
   end

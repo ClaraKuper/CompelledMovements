@@ -8,7 +8,7 @@ function [vp_id] = getID(expCode)
         while length(session) <= 1
             session = sprintf('0%i',session);
         end
-        if ~ischar(expStr) || isempty(subID)
+        if ~ischar(expCode) || isempty(ID)
             vp_id   = sprintf('%s%i_%s','test',0,expCode);
         else
             vp_id   = sprintf('%s%i_%s', ID,session,expCode);
