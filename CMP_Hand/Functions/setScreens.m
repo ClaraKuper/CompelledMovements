@@ -81,5 +81,5 @@ function setScreens
   visual.goalSize  = visual.ballSize;
   visual.range_accept = 100;
         
-        
+  visual.textCol   =  visual.white;     
   end
