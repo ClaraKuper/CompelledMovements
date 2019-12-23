@@ -57,13 +57,15 @@ function setScreens
   visual.black = BlackIndex(scr.expScreen);
   
   visual.textCol = visual.white;
-  
   visual.textCol = visual.white;
   
   % Open windows
   [visual.window, visual.windowRect] = PsychImaging('OpenWindow', scr.expScreen, visual.black);
   [visual.xCenter, visual.yCenter] = RectCenter(visual.windowRect);
   Screen('BlendFunction', visual.window, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  
+  ref = Screen('GetFlipInterval', visual.window);
+  scr.hz = 1/ref;
 
   visual.winWidth = visual.windowRect(3) - visual.windowRect(1);
   visual.winHeight = visual.windowRect(4) - visual.windowRect(2);
@@ -83,7 +85,7 @@ function setScreens
   visual.goals     = [visual.goalPos1;visual.goalPos2];
   visual.goalColor = visual.white;
   visual.goalSize  = visual.ballSize;
-  visual.range_accept = 25;
+  visual.range_accept = 50;
         
   visual.textCol   =  visual.white;     
   end

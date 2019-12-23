@@ -62,8 +62,9 @@ function trialData = runSingleTrial(t,b)
     end;
 
     % the jumping location is not reached, run down
+    t_go = Datapixx('GetTime');
     while on_ball && ballPos(2) < visual.goals(trial.goalPos,2) 
-        if ballPos(2) < jumpPos(2) || jumped
+        if Datapixx('GetTime')-t_go < trial.jumpTim || jumped
             ballPos = ballPos+[0,design.move_at_speed];
         else
             ballPos = pos_at_jump;
@@ -74,7 +75,7 @@ function trialData = runSingleTrial(t,b)
         Screen('DrawDots', visual.window, visual.goals(2,:), visual.goalSize, visual.goalColor, [], 2);
         Screen('DrawDots', visual.window, ballPos, visual.ballSize, visual.ballColor, [], 2);
         if isnan(t_go)
-            t_go = Datapixx('GetTime');
+            t_go = Datapixx('GetTime');                                     % this timing should be more precise
         end
         Screen('Flip', visual.window);
 
@@ -115,12 +116,14 @@ function trialData = runSingleTrial(t,b)
     mov_time = t_movEnd - t_movStart; 
     
     % present feedback
-    if hit_target
-        if mov_time > design.alMovT
-            DrawFormattedText(visual.window, 'Do not hover in the air!', 'center', 'center', visual.textCol);
-        else
-            DrawFormattedText(visual.window, 'Well done!', 'center', 'center', visual.textCol);
-        end
+    if rea_time > des.alReaT
+        DrawFormattedText(visual.window, 'Reaction to slow!', 'center', 'center', visual.textCol);
+    elseif isnan(rea_time)
+        DrawFormattedText(visual.window, 'Do not keep the the target touched ', 'center', 'center', visual.textCol);
+    elseif mov_time > design.alMovT
+        DrawFormattedText(visual.window, 'Do not hover in the air!', 'center', 'center', visual.textCol);
+    elseif hit_target 
+        DrawFormattedText(visual.window, 'Well done!', 'center', 'center', visual.textCol);
     else
         DrawFormattedText(visual.window, 'Target was missed!', 'center', 'center', visual.textCol);
     end

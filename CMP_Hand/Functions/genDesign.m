@@ -3,7 +3,7 @@ function genDesign(vpcode)
 % 2017 by Martin Rolfs
 % 2019 mod by Clara Kuper
 
-global design 
+global design settings scr
 
 % randomize random
 rand('state',sum(100*clock));
@@ -19,10 +19,6 @@ design.fixReq = 0;
 % 1 = include, 0 = ommit
 design.InclFix = 1;
 
-% test trial or full experiment
-% 1 = full, 0 = adjust session
-design.test = 0;
-
 % Timing %
 design.fixDur    = 0.5; % Fixation duration till trial starts [s]
 design.fixDurJ   = 0.5; % Additional jitter to fixation
@@ -32,23 +28,27 @@ design.iti       = 0.2; % Inter stimulus interval
 
 
 
-if design.test
-    timParams = load('subject_timParams.mat'); % load a matfile with subject name and code
-    design.jumpAfter = timParams.jumpAfter;    % time when target jumps
-    design.alResT    = tim.Params.alResT;      % Allowed response time
-    design.alMovT    = tim.Params.alResT;      % Allowed movement time
+if settings.TEST
+    load(sprintf('./Data/%s_timParams.mat',design.vpcode)); % load a matfile with subject name and code
+    design.jumpTim   = tim.rea * 2;     % random time after which target jumps, 2x reaction time
+    design.alResT    = tim.rea;      % Allowed response time
+    design.alMovT    = tim.mov;      % Allowed movement time
 else
-    design.jumpAfter = 0;
+    design.jumpTim   = 0;
     design.alResT    = 1.0;      % Allowed response time
     design.alMovT    = 1.0;      % Allowed movement time
 end
     
 
 % overall information %
-% number of blocks
-design.nBlocks = 2;
-% number of trials
-design.nTrials = 1;
+% number of blocks and trials in the first round
+if settings.TEST == 0
+    design.nBlocks = 1;
+    design.nTrials = 10;
+else
+    design.nBlocks = 5;
+    design.nTrials = 5;
+end
 
 % fixation point
 
@@ -60,8 +60,6 @@ design.stimsize   = 20;
 design.move_at_speed     = 5;     % how many pixels does the ball cross with each jump?
 
 % measured_variables
-
-design.measured_vars = ['rea_time','move_time'];
     
 
 
@@ -73,8 +71,10 @@ for b = 1:design.nBlocks
             t = t+1;
             % define goal position
             trial(t).goalPos = goal;
-            % define jump position 
-            trial(t).jumpPos = rand(1)*design.jumpAfter;
+            % define jump time
+            trial(t).jumpTim = rand(1)*design.jumpTim;
+            % define jump pos
+            trial(t).jumpPos = trial(t).jumpTim*design.move_at_speed*scr.hz;
             % define fixation duration
             trial(t).fixT    = design.fixDur + rand(1)*design.fixDurJ;
         end
@@ -88,4 +88,4 @@ design.blockOrder = 1:b;
 design.nTrialsPB  = t;
 
 % save 
-save(sprintf('%s.mat',vpcode),'design');
+save(sprintf('./Design/%s.mat',vpcode),'design');

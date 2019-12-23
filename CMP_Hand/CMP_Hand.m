@@ -1,5 +1,11 @@
 % Basic TouchPixx Demo
 % 2019 by Clara Kuper
+% ToDo
+% fixation point below goals 
+% paddle as motivation
+% check timing
+% include eye-tracking
+
 % based on ptb demos by Peter Scarfe http://peterscarfe.com/ptbtutorials.html
 % and vpixx demo 17 http://www.vpixx.com/manuals/psychtoolbox/html/Demo17.html
 
@@ -35,20 +41,17 @@ tic;
 % define some settings for the experiment
 global settings visual design
 
-settings.TEST = 0;
-settings.MODE = 1; % 1 = Hands, 2 = Eyes
+settings.TEST = 0; % 0 = setup session, 1 = actual testing
+settings.MODE = 1; % 1 = Hands, 2 = Eyes, 3 = both
 settings.DEBUG= 1; % 1 = debug mode, 0 = normal mode
 
 %% start the experiment loop, errors in this loop will be caught
 try
     newFile = 0;
         while ~newFile
-            if ~settings.TEST
-                subCode = getID(expCode);
-            else
-                subCode = '##';
-            end
-            subPath = strcat('Data/',subCode);
+            subCode = getID(expCode);
+
+            subPath = strcat('./Data/',subCode);
 
             % create data file
             datFile = sprintf('%s.dat',subPath);
@@ -84,9 +87,9 @@ try
     
     %% Run trials
     % Display Instructions:
-    DrawFormattedText(visual.window, 'Welcome to the game. Touch the ball to start. Hit the target when the ball moves.', 'center', 200, visual.textCol);
-    Screen('Flip',visual.window)
-    WaitSecs(2)
+    DrawFormattedText(visual.window, 'Touch the ball to start. Hit the target when the ball moves.', 'center', 200, visual.textCol);
+    Screen('Flip',visual.window);
+    WaitSecs(2);
     
     for b = 1:design.nBlocks
         data.block(b) = runBlock(b);
@@ -100,10 +103,13 @@ end
 % all features related to PTB. Note: we leave the variables in the
 % workspace so you can have a look at them if you want.
 % For help see: help sca
-if design.test
-    save(sprintf('Data/%s_data.mat',design.vpcode),'data');
+if settings.TEST == 1
+    save(datFile,'data');
 else
-    save(sprintf('Data/%s_timParams',design.vpcode),'data');
+    tim.rea       = nanmean([data.block(1).trial.rea_time]);
+    tim.mov       = nanmean([data.block(1).trial.mov_time]);
+    save(sprintf('./Data/%s_timParams',design.vpcode),'tim');
+    save(sprintf('./Data/%s_setUpData',design.vpcode),'data');
 end
 
 Datapixx('DisableTouchpixx');
@@ -113,4 +119,4 @@ Datapixx('Close'); %call the close command after closing the screens
 
 expEnd = toc;
 
-sprintf('This experiment lasted %i minutes', expEnd/60)
+sprintf('This experiment lasted %i minutes', round(expEnd/60,1));

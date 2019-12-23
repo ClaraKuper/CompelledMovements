@@ -11,7 +11,7 @@ function [vp_id] = getID(expCode)
         if ~ischar(expCode) || isempty(ID)
             vp_id   = sprintf('%s%i_%s','test',0,expCode);
         else
-            vp_id   = sprintf('%s%i_%s', ID,session,expCode);
+            vp_id   = sprintf('%s%s_%s', ID,session,expCode);
         end
         
     else
