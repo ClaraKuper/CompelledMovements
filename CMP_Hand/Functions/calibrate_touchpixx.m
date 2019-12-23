@@ -7,7 +7,7 @@ function calibrate_touchpixx(reps)
   % set the points, get a calibration on the same screen, ask if calibration was accepted or not  
   %% Calibration as in VPixx Demo 17
   % Put up first touch calibration target near top-left corner, and acquire TOUCHPixx coordinates
-  global scr visual
+  global visual
   
   % define locations for touch targets
   % upper left
@@ -27,7 +27,7 @@ function calibrate_touchpixx(reps)
   
   DrawFormattedText(visual.window, 'Calibration: Touch center of first calibration square', 'center', 'center', textCol);
   Screen('Flip', visual.window);
-  WaitSecs(1)
+  WaitSecs(1);
   
   calibration_done = false;
   

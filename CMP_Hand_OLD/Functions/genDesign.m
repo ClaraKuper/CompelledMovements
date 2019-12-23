@@ -46,9 +46,9 @@ end
 
 % overall information %
 % number of blocks
-design.nBlocks = 2;
+design.nBlocks = 1;
 % number of trials
-design.nTrials = 1;
+design.nTrials = 10;
 
 % fixation point
 
@@ -58,10 +58,6 @@ design.goalPos    = [1,2]; % 1 is left, 2 is right goal
 design.ballMoved  = -100;  % ball moved relative from fixation point
 design.stimsize   = 20;
 design.move_at_speed     = 5;     % how many pixels does the ball cross with each jump?
-
-% measured_variables
-
-design.measured_vars = ['rea_time','move_time'];
     
 
 

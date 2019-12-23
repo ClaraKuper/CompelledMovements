@@ -30,7 +30,7 @@ PsychDefaultSetup(2);
 rand('seed', sum(100 * clock));
 
 %start a timer for the experiment
-tic;
+expStart = tic;
 
 % define some settings for the experiment
 global settings visual design
@@ -113,4 +113,4 @@ Datapixx('Close'); %call the close command after closing the screens
 
 expEnd = toc;
 
-sprintf('This experiment lasted %i minutes', expEnd/60)
+sprint
