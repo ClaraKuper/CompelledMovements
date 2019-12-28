@@ -86,6 +86,10 @@ function setScreens
   visual.goalColor = visual.white;
   visual.goalSize  = visual.ballSize;
   visual.range_accept = 50;
+  
+  % fixation Position
+  fixtoGoal        = [0, 350];
+  visual.fixPos    = [visual.xCenter, visual.yCenter] + fixtoGoal;
         
   visual.textCol   =  visual.white;     
   end

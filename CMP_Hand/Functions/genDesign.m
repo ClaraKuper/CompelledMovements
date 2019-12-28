@@ -30,9 +30,9 @@ design.iti       = 0.2; % Inter stimulus interval
 
 if settings.TEST
     load(sprintf('./Data/%s_timParams.mat',design.vpcode)); % load a matfile with subject name and code
-    design.jumpTim   = tim.rea * 2;     % random time after which target jumps, 2x reaction time
-    design.alResT    = tim.rea;      % Allowed response time
-    design.alMovT    = tim.mov;      % Allowed movement time
+    design.jumpTim   = tim.rea;            % random time after which target jumps, maximum is reaction time 
+    design.alResT    = tim.rea * 1.5;      % Allowed response time
+    design.alMovT    = tim.mov * 1.5;      % Allowed movement time
 else
     design.jumpTim   = 0;
     design.alResT    = 1.0;      % Allowed response time
@@ -47,15 +47,16 @@ if settings.TEST == 0
     design.nTrials = 10;
 else
     design.nBlocks = 5;
-    design.nTrials = 5;
+    design.nTrials = 10;
 end
+
 
 % fixation point
 
 
 % conditions
 design.goalPos    = [1,2]; % 1 is left, 2 is right goal
-design.ballMoved  = -100;  % ball moved relative from fixation point
+design.ballMoved  = -300;  % ball moved relative from fixation point
 design.stimsize   = 20;
 design.move_at_speed     = 5;     % how many pixels does the ball cross with each jump?
 

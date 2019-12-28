@@ -41,9 +41,9 @@ tic;
 % define some settings for the experiment
 global settings visual design
 
-settings.TEST = 0; % 0 = setup session, 1 = actual testing
+settings.TEST = 1; % 0 = setup session, 1 = actual testing
 settings.MODE = 1; % 1 = Hands, 2 = Eyes, 3 = both
-settings.DEBUG= 1; % 1 = debug mode, 0 = normal mode
+settings.DEBUG= 0; % 1 = debug mode, 0 = normal mode
 
 %% start the experiment loop, errors in this loop will be caught
 try
@@ -54,7 +54,8 @@ try
             subPath = strcat('./Data/',subCode);
 
             % create data file
-            datFile = sprintf('%s.dat',subPath);
+            datFile    = sprintf('%s.dat',subPath);
+            datLogFile = sprintf('%sLog.dat',subPath);
             if ~settings.TEST && exist(datFile,'file')
                 o = input('>>>> This file exists already. Should I overwrite it [y / n]? ','s');
                 if strcmp(o,'y')
@@ -87,12 +88,12 @@ try
     
     %% Run trials
     % Display Instructions:
-    DrawFormattedText(visual.window, 'Touch the ball to start. Hit the target when the ball moves.', 'center', 200, visual.textCol);
+    DrawFormattedText(visual.window, 'Touch the bar to start. Try to block the target.', 'center', 200, visual.textCol);
     Screen('Flip',visual.window);
     WaitSecs(2);
     
     for b = 1:design.nBlocks
-        data.block(b) = runBlock(b);
+        [data.block(b),dataLog.block(b)] = runBlock(b);
     end    
 catch me
     rethrow(me);
@@ -105,6 +106,7 @@ end
 % For help see: help sca
 if settings.TEST == 1
     save(datFile,'data');
+    save(datLogFile,'dataLog');
 else
     tim.rea       = nanmean([data.block(1).trial.rea_time]);
     tim.mov       = nanmean([data.block(1).trial.mov_time]);

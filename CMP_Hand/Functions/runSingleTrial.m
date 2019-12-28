@@ -1,4 +1,4 @@
-function trialData = runSingleTrial(t,b)
+function [trialData,dataLog]  = runSingleTrial(t,b)
     
     global design visual settings
     
@@ -15,12 +15,13 @@ function trialData = runSingleTrial(t,b)
 
     % Assign ball position to be at start
     ballPos = visual.ballPos_start;
+    fixPos  = visual.fixPos;
 
     % Initialize timing and monitoring parameters
 
-    on_ball    = false;
-    jumped     = false;
-    hit_target = false;
+    on_fix       = false;
+    jumped       = false;
+    hit_target   = false;
     fix_released = false;
 
     % timing
@@ -30,98 +31,126 @@ function trialData = runSingleTrial(t,b)
     t_movStart = NaN;  % the movement started
     t_movEnd   = NaN;  % the movements ended
     t_goal     = NaN;  % the ball reached the goal
+    
+    % dataLog - write all the available logging data here
+    Datapixx('RegWrRd');
+    status             = Datapixx('GetTouchpixxStatus');
+    [touches,timetag]  = Datapixx('ReadTouchpixxLog');
+    dataLog.timetag    = timetag;
+    dataLog.touches    = touches;
+    dataLog.message    = ['Data Log initiated', Datapixx('GetTime')];
 
 
     % Run the trial. Display the goal and a moving ball
     Screen('DrawDots', visual.window, visual.goals(1,:), visual.goalSize, visual.goalColor, [], 2);
     Screen('DrawDots', visual.window, visual.goals(2,:), visual.goalSize, visual.goalColor, [], 2);
     Screen('DrawDots', visual.window, ballPos, visual.ballSize, visual.ballColor, [], 2);
+    Screen('DrawLine', visual.window, visual.goalColor, fixPos(1)-50 , fixPos(2), fixPos(1) +50, fixPos(2));
     t_draw = Screen('Flip', visual.window);
 
     % while the finger is not yet on the starting position, monitor for that
-    while ~ on_ball
+    while ~ on_fix
         Datapixx('RegWrRd');
         status = Datapixx('GetTouchpixxStatus');
         
         if isfield(status, 'newLogFrames') && status.newLogFrames > 0  % We have new TOUCHPixx logged data to read?
-            [touches, timetag] = Datapixx('ReadTouchpixxLog',status.newLogFrames);
-            touch_X = visual.mx*touches(1)+visual.bx;
-            touch_Y = visual.my*touches(2)+visual.by;
-            if touch_X > ballPos(1) - visual.range_accept && touch_X < ballPos(1) + visual.range_accept && ...
-                    touch_Y > ballPos(2) - visual.range_accept && ...
-                    touch_Y < ballPos(2) + visual.range_accept
-                on_ball = true;
+            [touches, timetag] = Datapixx('ReadTouchpixxLog');
+            dataLog.touches    = [dataLog.touches,touches];
+            dataLog.timetag    = [dataLog.timetag, timetag];
+            touch_X = visual.mx*touches(1,status.newLogFrames)+visual.bx;
+            touch_Y = visual.my*touches(2,status.newLogFrames)+visual.by;
+            if touch_X > fixPos(1) - visual.range_accept && touch_X < fixPos(1) + visual.range_accept && ...
+                    touch_Y > fixPos(2) - visual.range_accept && ...
+                    touch_Y < fixPos(2) + visual.range_accept
+                on_fix = true;
                 t_touched   = timetag(status.newLogFrames);
-                Screen('DrawDots', visual.window, visual.goals(1,:), visual.goalSize, visual.goalColor, [], 2);
-                Screen('DrawDots', visual.window, visual.goals(2,:), visual.goalSize, visual.goalColor, [], 2);
-                Screen('DrawDots', visual.window, ballPos, visual.ballSize, visual.ballColor, [], 2);
-                Screen('Flip', visual.window);
-                WaitSecs(trial.fixT)
+                dataLog.message = [dataLog.message, ['The fixation point was touched', Datapixx('GetTime')]];
+                WaitSecs(trial.fixT);
             end
+            Screen('DrawDots', visual.window, visual.goals(1,:), visual.goalSize, visual.goalColor, [], 2);
+            Screen('DrawDots', visual.window, visual.goals(2,:), visual.goalSize, visual.goalColor, [], 2);
+            Screen('DrawDots', visual.window, ballPos, visual.ballSize, visual.ballColor, [], 2);
+            Screen('DrawLine', visual.window, visual.goalColor, fixPos(1)-50 , fixPos(2), fixPos(1) +50, fixPos(2));
+            Screen('Flip', visual.window);
         end
     end;
 
     % the jumping location is not reached, run down
-    t_go = Datapixx('GetTime');
-    while on_ball && ballPos(2) < visual.goals(trial.goalPos,2) 
+    while on_fix && isnan(t_goal)
+        if isnan(t_go)
+            Datapixx('RegWrRd');
+            t_go = Datapixx('GetTime');
+            dataLog.message = [dataLog.message, ['The motion started', Datapixx('GetTime')]];
+        end
+        Datapixx('RegWrRd');
         if Datapixx('GetTime')-t_go < trial.jumpTim || jumped
             ballPos = ballPos+[0,design.move_at_speed];
         else
             ballPos = pos_at_jump;
             jumped  = true;
+            dataLog.message = [dataLog.message, ['The ball jumped', Datapixx('GetTime')]];
         end
 
         Screen('DrawDots', visual.window, visual.goals(1,:), visual.goalSize, visual.goalColor, [], 2);
         Screen('DrawDots', visual.window, visual.goals(2,:), visual.goalSize, visual.goalColor, [], 2);
         Screen('DrawDots', visual.window, ballPos, visual.ballSize, visual.ballColor, [], 2);
-        if isnan(t_go)
-            t_go = Datapixx('GetTime');                                     % this timing should be more precise
-        end
+        Screen('DrawLine', visual.window, visual.goalColor, fixPos(1)-50 , fixPos(2), fixPos(1) +50, fixPos(2));
         Screen('Flip', visual.window);
-
+        
         % Get the touchpixx status
         Datapixx('RegWrRd');
         status = Datapixx('GetTouchpixxStatus');
 
-        if ~ status.isPressed && ~ fix_released
-            % initialize the timer to reach the target
-            [~, timetag] = Datapixx('ReadTouchpixxLog');
-            t_movStart      = timetag(status.newLogFrames);                 % this assumes that the last time tag is when the screen has been released
-            fix_released = true;
-            Datapixx('RegWrRd');
-            status = Datapixx('GetTouchpixxStatus');
-        end
-
-        if fix_released && status.isPressed && status.newLogFrames > 0 % fixation was released and something new was touched
+        if status.newLogFrames                                              % something new happened
             [touches, timetag] = Datapixx('ReadTouchpixxLog');
-            touch_X = visual.mx*touches(1,1)+visual.bx;                               % we want the coordinates from the first time the target has been touched
-            touch_Y = visual.my*touches(2,1)+visual.by;
-            if touch_X > visual.goals(trial.goalPos,1) - visual.range_accept && ...
+            dataLog.touches    = [dataLog.touches,touches];
+            dataLog.timetag    = [dataLog.timetag, timetag];
+            touch_X = visual.mx*touches(1,status.newLogFrames)+visual.bx;   % we want the coordinates from the first time the target has been touched
+            touch_Y = visual.my*touches(2,status.newLogFrames)+visual.by;
+            fixPos  = [touch_X,touch_Y];
+            % check if movement started
+            if isnan(t_movStart) && touch_X < visual.fixPos(1) - visual.range_accept || ...
+                    isnan(t_movStart) && touch_X > visual.fixPos(1) + visual.range_accept ||...
+                    isnan(t_movStart) && touch_Y < visual.fixPos(2) - visual.range_accept ||...
+                    isnan(t_movStart) && touch_Y > visual.fixPos(2) + visual.range_accept
+                    
+                t_movStart = timetag(status.newLogFrames);
+                Datapixx('RegWrRd');
+                dataLog.message = [dataLog.message, ['The hand moved', Datapixx('GetTime')]];
+            
+            elseif touch_X > visual.goals(trial.goalPos,1) - visual.range_accept && ...
                     touch_X < visual.goals(trial.goalPos,1) + visual.range_accept &&...
                     touch_Y > visual.goals(trial.goalPos,2) - visual.range_accept &&...
                     touch_Y < visual.goals(trial.goalPos,2) + visual.range_accept
-               t_movEnd  = timetag(1);                                 % we want a time tag when the target was touched for the first time
+               t_movEnd  = timetag(status.newLogFrames);                    % we want a time tag when the target was touched for the first time
+               Datapixx('RegWrRd');
+               dataLog.message = [dataLog.message, ['The hand reached the target', Datapixx('GetTime')]];
                hit_target = true;
             end
-         if ballPos(2) <= visual.goals(trial.goalPos,2)
+            
+         if ballPos(2) >= visual.goals(trial.goalPos,2)
+             Datapixx('RegWrRd');
              t_goal   = Datapixx('GetTime');
+             dataLog.message = [dataLog.message, ['The ball hit the target', Datapixx('GetTime')]];
          end
          
         end
     end
-
+    
+    Datapixx('RegWrRd');
+    dataLog.message = [dataLog.message, ['Trial End', Datapixx('GetTime')]];
     Datapixx('StopTouchpixxLog');  
 
     rea_time = t_movStart - t_go;
     mov_time = t_movEnd - t_movStart; 
     
     % present feedback
-    if rea_time > des.alReaT
+    if rea_time > design.alResT
         DrawFormattedText(visual.window, 'Reaction to slow!', 'center', 'center', visual.textCol);
     elseif isnan(rea_time)
-        DrawFormattedText(visual.window, 'Do not keep the the target touched ', 'center', 'center', visual.textCol);
+        DrawFormattedText(visual.window, 'Do not wait at the start.', 'center', 'center', visual.textCol);
     elseif mov_time > design.alMovT
-        DrawFormattedText(visual.window, 'Do not hover in the air!', 'center', 'center', visual.textCol);
+        DrawFormattedText(visual.window, 'Move faster!', 'center', 'center', visual.textCol);
     elseif hit_target 
         DrawFormattedText(visual.window, 'Well done!', 'center', 'center', visual.textCol);
     else
@@ -137,6 +166,7 @@ function trialData = runSingleTrial(t,b)
     end
 
     Screen('Flip', visual.window);
+    WaitSecs(1)
     
     trialData.rea_time        = rea_time;
     trialData.mov_time        = mov_time;

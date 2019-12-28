@@ -1,4 +1,4 @@
-function blockData = runBlock(b)
+function [blockData,dataLog] = runBlock(b)
 
     global visual design
     message = sprintf('This is block no. %i', b);
@@ -8,7 +8,7 @@ function blockData = runBlock(b)
     
     for t =  1:design.nTrialsPB
         
-        blockData.trial(t) = runSingleTrial(t,b);
+        [blockData.trial(t),dataLog.trial(t)] = runSingleTrial(t,b);
         
     end
     
