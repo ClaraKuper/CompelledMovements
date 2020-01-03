@@ -3,8 +3,8 @@ function [blockData,dataLog] = runBlock(b)
     global visual design
     message = sprintf('This is block no. %i', b);
     DrawFormattedText(visual.window, message, 'center', 200, visual.textCol);
-    Screen('Flip',visual.window)
-    WaitSecs(2)
+    Screen('Flip',visual.window);
+    WaitSecs(2);
     
     for t =  1:design.nTrialsPB
         

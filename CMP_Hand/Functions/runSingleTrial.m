@@ -38,7 +38,7 @@ function [trialData,dataLog]  = runSingleTrial(t,b)
     t_touched  = NaN;  % the ball was touched
     t_go       = NaN;  % the ball started moving
     t_movStart = NaN;  % the movement started
-    t_jumped   = NaN;  % the ball has jumped
+    t_jump     = NaN;  % the ball has jumped
     t_movEnd   = NaN;  % the movements ended
     t_goal     = NaN;  % the ball reached the goal
     t_end      = NaN;  % the trial is over
@@ -72,13 +72,13 @@ function [trialData,dataLog]  = runSingleTrial(t,b)
             dataLog.touches    = [dataLog.touches,touches];                 % write them to LogFile
             dataLog.timetag    = [dataLog.timetag, timetag];  
             dataLog.frames     = [dataLog.frames, status.newLogFrames];
-            touch_X = visual.mx*touches(1,status.newLogFrames -1)+visual.bx;   % convert touch to screen coordinates
-            touch_Y = visual.my*touches(2,status.newLogFrames -1)+visual.by;
+            touch_X = visual.mx*touches(1,status.newLogFrames)+visual.bx;   % convert touch to screen coordinates
+            touch_Y = visual.my*touches(2,status.newLogFrames)+visual.by;
             if touch_X > fixPos(1) - visual.range_accept && touch_X < fixPos(1) + visual.range_accept && ...
                     touch_Y > fixPos(2) - visual.range_accept && ...
                     touch_Y < fixPos(2) + visual.range_accept
                 on_fix = true;
-                t_touched     = timetag(status.newLogFrames-1);
+                t_touched     = timetag(status.newLogFrames);
                 t_touchedPixx = Datapixx('GetTime');
                 dataLog.message = [dataLog.message, sprintf('The fixation point was touched at %f \n', t_touchedPixx)];
                 WaitSecs(trial.fixT);
@@ -108,9 +108,9 @@ function [trialData,dataLog]  = runSingleTrial(t,b)
             ballPos = ballPos+[0,design.move_at_speed];
         else
             ballPos      = pos_at_jump; % update ball location to after-jump position
-            t_jumped     = Datapixx('GetTime');
+            t_jump       = Datapixx('GetTime');
             jumped       = true;
-            dataLog.message = [dataLog.message, sprintf('The ball jumped at %f \n',t_jumped)];
+            dataLog.message = [dataLog.message, sprintf('The ball jumped at %f \n',t_jump)];
         end
         
         %Draw everything on the screen and show
@@ -130,8 +130,8 @@ function [trialData,dataLog]  = runSingleTrial(t,b)
             dataLog.touches    = [dataLog.touches,touches];                 % write new information to log file
             dataLog.timetag    = [dataLog.timetag, timetag];
             dataLog.frames     = status.newLogFrames;
-            touch_X = visual.mx*touches(1,status.newLogFrames - 1)+visual.bx;   % Convert touch to screen coordinates
-            touch_Y = visual.my*touches(2,status.newLogFrames - 1)+visual.by;   % We use the one-before-last available touch information
+            touch_X = visual.mx*touches(1,status.newLogFrames)+visual.bx;   % Convert touch to screen coordinates
+            touch_Y = visual.my*touches(2,status.newLogFrames)+visual.by;   % We use the one-before-last available touch information
                                                                                 % on frame is discarded to account for no-touch-recoding (coordinates 0,0)
             fixPos  = [touch_X,touch_Y];                                        % we set the position of the bar to the current touch coordinates 
             
@@ -142,7 +142,7 @@ function [trialData,dataLog]  = runSingleTrial(t,b)
                     isnan(t_movStart) && touch_Y > visual.fixPos(2) + visual.range_accept
                     
                 Datapixx('RegWrRd');
-                t_movStart      = timetag(status.newLogFrames -1);
+                t_movStart      = timetag(status.newLogFrames);
                 t_movStartPixx  = Datapixx('GetTime');
                 dataLog.message = [dataLog.message, sprintf('The hand moved at %f', t_movStartPixx)];
             

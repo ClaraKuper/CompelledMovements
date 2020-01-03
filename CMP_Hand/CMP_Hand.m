@@ -41,7 +41,7 @@ tic;
 % define some settings for the experiment
 global settings visual design
 
-settings.TEST = 1; % 0 = setup session, 1 = actual testing
+settings.TEST = 0; % 0 = setup session, 1 = actual testing
 settings.MODE = 1; % 1 = Hands, 2 = Eyes, 3 = both
 settings.DEBUG= 0; % 1 = debug mode, 0 = normal mode
 
