@@ -136,31 +136,27 @@ function [trialData,dataLog]  = runSingleTrial(t,b)
             fixPos  = [touch_X,touch_Y];                                        % we set the position of the bar to the current touch coordinates 
             
             % check if movement started (touch not within box around window)
+            Datapixx('RegWrRd');
             if isnan(t_movStart) && touch_X < visual.fixPos(1) - visual.range_accept || ...
                     isnan(t_movStart) && touch_X > visual.fixPos(1) + visual.range_accept ||...
                     isnan(t_movStart) && touch_Y < visual.fixPos(2) - visual.range_accept ||...
                     isnan(t_movStart) && touch_Y > visual.fixPos(2) + visual.range_accept
-                    
-                Datapixx('RegWrRd');
                 t_movStart      = timetag(status.newLogFrames);
                 t_movStartPixx  = Datapixx('GetTime');
                 dataLog.message = [dataLog.message, sprintf('The hand moved at %f', t_movStartPixx)];
-            
             % check if movement reached the target box
-            elseif touch_X > visual.goals(trial.goalPos,1) - visual.range_accept && ...
+            elseif ~ hit_target && touch_X > visual.goals(trial.goalPos,1) - visual.range_accept && ...
                     touch_X < visual.goals(trial.goalPos,1) + visual.range_accept &&...
                     touch_Y > visual.goals(trial.goalPos,2) - visual.range_accept &&...
                     touch_Y < visual.goals(trial.goalPos,2) + visual.range_accept
-               Datapixx('RegWrRd');
                t_movEnd        = timetag(status.newLogFrames);                    % we want a time tag when the target was touched for the first time
                t_movEndPixx    = Datapixx('GetTime');
                dataLog.message = [dataLog.message, sprintf('The hand reached the target at %f',t_movEndPixx)];
                hit_target      = true;
-            elseif touch_X > visual.goals(disPos,1) - visual.range_accept && ...
+            elseif ~ hit_distractor && touch_X > visual.goals(disPos,1) - visual.range_accept && ...
                     touch_X < visual.goals(disPos,1) + visual.range_accept &&...
                     touch_Y > visual.goals(disPos,2) - visual.range_accept &&...
                     touch_Y < visual.goals(disPos,2) + visual.range_accept
-                Datapixx('RegWrRd');
                 t_movEnd        = timetag(status.newLogFrames);                    % we want a time tag when the target was touched for the first time
                 t_movEndPixx    = Datapixx('GetTime');
                 dataLog.message = [dataLog.message, sprintf('The hand reached the distractor at %f',t_movEndPixx)];
@@ -170,7 +166,7 @@ function [trialData,dataLog]  = runSingleTrial(t,b)
          if ballPos(2) >= visual.goals(trial.goalPos,2)
              Datapixx('RegWrRd');
              t_goal   = Datapixx('GetTime');
-             dataLog.message = [dataLog.message, ['The ball hit the target', Datapixx('GetTime')]];
+             dataLog.message = [dataLog.message, sprintf('The ball hit the target at %f', t_goal)];
              if isnan(t_movEnd)
                  % check if the other target has been reached
                 t_movEnd = t_goal;
