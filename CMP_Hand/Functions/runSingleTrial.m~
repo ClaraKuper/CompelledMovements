@@ -43,9 +43,6 @@ function [trialData,dataLog]  = runSingleTrial(t,b)
     t_goal     = NaN;  % the ball reached the goal
     t_end      = NaN;  % the trial is over
     
-    % position logging
-    resPos     = NaN;
-    
     % dataLog - write all the available logging data here
     Datapixx('RegWrRd');
     status             = Datapixx('GetTouchpixxStatus');
@@ -165,16 +162,18 @@ function [trialData,dataLog]  = runSingleTrial(t,b)
                 dataLog.message = [dataLog.message, sprintf('The hand reached the distractor at %f\n',t_movEndPixx)];
                 hit_distractor  = true;
             end
-        end
-        if ballPos(2) >= visual.goals(goalPos,2)
-            Datapixx('RegWrRd');
-            t_goal   = Datapixx('GetTime');
-            dataLog.message = [dataLog.message, sprintf('The ball hit the target at %f\n', t_goal)];
-            if isnan(t_movEnd)
-                % check if the other target has been reached
+            
+         if ballPos(2) >= visual.goals(goalPos,2)
+             Datapixx('RegWrRd');
+             t_goal   = Datapixx('GetTime');
+             dataLog.message = [dataLog.message, sprintf('The ball hit the target at %f\n', t_goal)];
+             if isnan(t_movEnd)
+                 % check if the other target has been reached
                 t_movEnd = t_goal;
                 no_hit   = true;
-            end
+             end
+         end
+         
         end
     end
     
