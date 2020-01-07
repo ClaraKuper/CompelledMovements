@@ -143,7 +143,7 @@ function [trialData,dataLog]  = runSingleTrial(t,b)
                     isnan(t_movStart) && touch_Y > visual.fixPos(2) + visual.range_accept
                 t_movStart      = timetag(status.newLogFrames);
                 t_movStartPixx  = Datapixx('GetTime');
-                dataLog.message = [dataLog.message, sprintf('The hand moved at %f', t_movStartPixx)];
+                dataLog.message = [dataLog.message, sprintf('The hand moved at %f\n', t_movStartPixx)];
             % check if movement reached the target box
             elseif ~ hit_target && touch_X > visual.goals(trial.goalPos,1) - visual.range_accept && ...
                     touch_X < visual.goals(trial.goalPos,1) + visual.range_accept &&...
@@ -151,7 +151,7 @@ function [trialData,dataLog]  = runSingleTrial(t,b)
                     touch_Y < visual.goals(trial.goalPos,2) + visual.range_accept
                t_movEnd        = timetag(status.newLogFrames);                    % we want a time tag when the target was touched for the first time
                t_movEndPixx    = Datapixx('GetTime');
-               dataLog.message = [dataLog.message, sprintf('The hand reached the target at %f',t_movEndPixx)];
+               dataLog.message = [dataLog.message, sprintf('The hand reached the target at %f\n',t_movEndPixx)];
                hit_target      = true;
             elseif ~ hit_distractor && touch_X > visual.goals(disPos,1) - visual.range_accept && ...
                     touch_X < visual.goals(disPos,1) + visual.range_accept &&...
@@ -159,14 +159,14 @@ function [trialData,dataLog]  = runSingleTrial(t,b)
                     touch_Y < visual.goals(disPos,2) + visual.range_accept
                 t_movEnd        = timetag(status.newLogFrames);                    % we want a time tag when the target was touched for the first time
                 t_movEndPixx    = Datapixx('GetTime');
-                dataLog.message = [dataLog.message, sprintf('The hand reached the distractor at %f',t_movEndPixx)];
+                dataLog.message = [dataLog.message, sprintf('The hand reached the distractor at %f\n',t_movEndPixx)];
                 hit_distractor  = true;
             end
             
          if ballPos(2) >= visual.goals(trial.goalPos,2)
              Datapixx('RegWrRd');
              t_goal   = Datapixx('GetTime');
-             dataLog.message = [dataLog.message, sprintf('The ball hit the target at %f', t_goal)];
+             dataLog.message = [dataLog.message, sprintf('The ball hit the target at %f\n', t_goal)];
              if isnan(t_movEnd)
                  % check if the other target has been reached
                 t_movEnd = t_goal;
