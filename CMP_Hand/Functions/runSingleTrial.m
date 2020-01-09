@@ -1,8 +1,7 @@
-function [trialData,dataLog]  = runSingleTrial(t,b)
+function [trialData,dataLog]  = runSingleTrial(trial)
     
     global design visual settings
     
-    trial = design.b(b).trial(t); 
 
     Datapixx('SetTouchpixxLog');                                    % Configure TOUCHPixx logging with default buffer
     Datapixx('EnableTouchpixxLogContinuousMode');                   % Continuous logging during a touch. This also gives you long output from buffer reads
@@ -32,8 +31,10 @@ function [trialData,dataLog]  = runSingleTrial(t,b)
     hit_target     = false;
     hit_distractor = false;
     no_hit         = false;
+    early_rea      = false;
 
     % timing
+    t_initPixx = NaN;  % initialize the DataPixx Log
     t_draw     = NaN;  % the stimulus was on screen
     t_touched  = NaN;  % the ball was touched
     t_go       = NaN;  % the ball started moving
@@ -45,6 +46,7 @@ function [trialData,dataLog]  = runSingleTrial(t,b)
     
     % position logging
     resPos     = NaN;
+    trial_succ = NaN;
     
     % dataLog - write all the available logging data here
     Datapixx('RegWrRd');
@@ -147,6 +149,10 @@ function [trialData,dataLog]  = runSingleTrial(t,b)
                 t_movStart      = timetag(status.newLogFrames);
                 t_movStartPixx  = Datapixx('GetTime');
                 dataLog.message = [dataLog.message, sprintf('The hand moved at %f\n', t_movStartPixx)];
+                if isnan(t_go)
+                    early_rea   = true;
+                    break
+                end
             % check if movement reached the target box
             elseif ~ hit_target && touch_X > visual.goals(trial.goalPos,1) - visual.range_accept && ...
                     touch_X < visual.goals(trial.goalPos,1) + visual.range_accept &&...
@@ -156,6 +162,7 @@ function [trialData,dataLog]  = runSingleTrial(t,b)
                t_movEndPixx    = Datapixx('GetTime');
                dataLog.message = [dataLog.message, sprintf('The hand reached the target at %f\n',t_movEndPixx)];
                hit_target      = true;
+               trial_succ      = 0;
             elseif ~ hit_distractor && touch_X > visual.goals(disPos,1) - visual.range_accept && ...
                     touch_X < visual.goals(disPos,1) + visual.range_accept &&...
                     touch_Y > visual.goals(disPos,2) - visual.range_accept &&...
@@ -164,6 +171,7 @@ function [trialData,dataLog]  = runSingleTrial(t,b)
                 t_movEndPixx    = Datapixx('GetTime');
                 dataLog.message = [dataLog.message, sprintf('The hand reached the distractor at %f\n',t_movEndPixx)];
                 hit_distractor  = true;
+                trial_succ      = 0;
             end
         end
         if ballPos(2) >= visual.goals(goalPos,2)
@@ -190,9 +198,11 @@ function [trialData,dataLog]  = runSingleTrial(t,b)
 
     if isnan(t_movStart)
         DrawFormattedText(visual.window, 'Movement not executed.', 'center', 'center', visual.textCol);
+        trial_succ = 1;
     elseif rea_time > design.alResT
         DrawFormattedText(visual.window, 'Reaction to slow!', 'center', 'center', visual.textCol);
     elseif mov_time > design.alMovT
+        trial_succ = 2;
         DrawFormattedText(visual.window, 'Move faster!', 'center', 'center', visual.textCol);
     elseif hit_target 
         DrawFormattedText(visual.window, 'Well done!', 'center', 'center', visual.textCol);
@@ -201,17 +211,28 @@ function [trialData,dataLog]  = runSingleTrial(t,b)
         DrawFormattedText(visual.window, 'Wrong target!', 'center', 'center', visual.textCol);
         resPos = disPos;
     elseif no_hit
-        DrawFormattedText(visual.window, 'Move faster, Case II!', 'center', 'center', visual.textCol);
+        DrawFormattedText(visual.window, 'End point not reached!', 'center', 'center', visual.textCol);
+        trial_succ = 3;
+    elseif early_rea
+        DrawFormattedText(visual.window, 'Wait till go signal!', 'center', 'center', visual.textCol);
+        trial_succ = 4;
+    else
+        DrawFormattedText(visual.window, 'Unknown Error', 'center', 'center', visual.textCol);
+        trial_succ = 5;
     end
 
     if settings.DEBUG == 1
         Screen('DrawDots', visual.window, [touch_X, touch_Y], visual.ballSize, visual.white)
     end
 
-    Screen('Flip', visual.window);
-    WaitSecs(1)
+    Screen('Flip', visual.window)
     
     trialData.resPos          = resPos;
+    trialData.success         = trial_succ;                                 % 0 = success 
+                                                                            % 1 = no movement 
+                                                                            % 2 = reaction too slow 
+                                                                            % 3 = long time "in flight" 
+                                                                            % 4 = reaction too soon
     trialData.rea_time        = rea_time;
     trialData.mov_time        = mov_time;
     trialData.t_draw          = t_draw;

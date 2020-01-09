@@ -3,12 +3,26 @@ function [blockData,dataLog] = runBlock(b)
     global visual design
     message = sprintf('This is block no. %i', b);
     DrawFormattedText(visual.window, message, 'center', 200, visual.textCol);
+    trials_total = design.nTrialsPB;
+    t            = 1;
+    
     Screen('Flip',visual.window);
     WaitSecs(2);
     
-    for t =  1:design.nTrialsPB
+    while t <=  trials_total
         
-        [blockData.trial(t),dataLog.trial(t)] = runSingleTrial(t,b);
+        trial = design.b(b).trial(t); 
+        
+        [blockData.trial(t),dataLog.trial(t)] = runSingleTrial(trial);
+        
+        if blockData.trial(t).success
+            
+            trials_total                    = trials_total + 1;
+            design.b(b).trial(trials_total) = trial;
+        
+        end
+        
+        t = t+1;
         
     end
     
