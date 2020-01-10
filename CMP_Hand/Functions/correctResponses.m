@@ -1,22 +1,30 @@
 % Define correct and incorrect responses from script
 alljumpTime = [];
 allHits     = [];
-
+miss_list   = [];
 for b = 1:length(data.block)
   block = data.block(b);
   for t = 1:length(block.trial)
     hit         = 0;
     trial   = block.trial(t);
-    des     = design.b(b).trial(t);
-    goalPos = des.goalPos;
-    switch goalPos
-      case goalPos == trial.resPos
-        hit = 1;
-      case goalPos != trial.resPos
-        hit = 0;
+    if ~ trial.success
+      if t <= length(design.b(b).trial)
+        des     = design.b(b).trial(t);
+      else
+        sprintf('hello');
+      end
+      goalPos = des.goalPos;
+      switch goalPos
+        case goalPos == trial.resPos
+          hit = 1;
+        case goalPos != trial.resPos
+          hit = 0;
+      end
+      alljumpTime = [alljumpTime, des.jumpTim];
+      allHits     = [allHits, hit];
+    else
+      design.b(b).trial(length(design.b(b).trial)+1)   = design.b(b).trial(t);
     end
-    alljumpTime = [alljumpTime, des.jumpTim];
-    allHits     = [allHits, hit];
   end
 end 
 
