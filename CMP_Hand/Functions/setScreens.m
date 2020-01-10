@@ -86,6 +86,7 @@ function setScreens
   visual.goalColor = visual.white;
   visual.goalSize  = visual.ballSize;
   visual.range_accept = 50;
+  visual.range_calib  = 25;
   
   % fixation Position
   fixtoGoal        = [0, 350];
