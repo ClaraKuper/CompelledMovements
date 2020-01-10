@@ -201,6 +201,7 @@ function [trialData,dataLog]  = runSingleTrial(trial)
         trial_succ = 1;
     elseif rea_time > design.alResT
         DrawFormattedText(visual.window, 'Reaction to slow!', 'center', 'center', visual.textCol);
+        trial_succ = 6;
     elseif mov_time > design.alMovT
         trial_succ = 2;
         DrawFormattedText(visual.window, 'Move faster!', 'center', 'center', visual.textCol);
@@ -233,6 +234,8 @@ function [trialData,dataLog]  = runSingleTrial(trial)
                                                                             % 2 = reaction too slow 
                                                                             % 3 = long time "in flight" 
                                                                             % 4 = reaction too soon
+                                                                            % 5 = unknown error
+                                                                            % 6 = reaction too slow
     trialData.rea_time        = rea_time;
     trialData.mov_time        = mov_time;
     trialData.t_draw          = t_draw;
