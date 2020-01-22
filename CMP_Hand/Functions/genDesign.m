@@ -25,16 +25,13 @@ design.fixDurJ   = 0.5; % Additional jitter to fixation
 
 design.iti       = 0.2; % Inter stimulus interval
 
-
-
-
 if settings.TEST
     load(sprintf('./Data/%s_timParams.mat',design.vpcode)); % load a matfile with subject name and code
-    design.jumpTim   = tim.rea;            % random time after which target jumps, maximum is reaction time 
-    design.alResT    = tim.rea * 1.5;      % Allowed response time
-    design.alMovT    = tim.mov * 1.5;      % Allowed movement time
+    design.alResT    = tim.rea + 2*tim.rea_sd;      % Allowed response time
+    design.alMovT    = tim.mov + 2*tim.mov_sd;      % Allowed movement time
+    design.jumpTim   = design.alResT;               % random time after which target jumps, maximum is the allowed response time 
 else
-    design.jumpTim   = 0;
+    design.jumpTim   = 0.1;
     design.alResT    = 1.0;      % Allowed response time
     design.alMovT    = 1.0;      % Allowed movement time
 end

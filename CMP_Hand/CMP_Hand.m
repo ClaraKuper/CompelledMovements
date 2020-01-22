@@ -112,7 +112,9 @@ if settings.TEST == 1
     save(sprintf('./Design/%s_design.mat',design.vpcode),'design'); %
 else
     tim.rea       = nanmean([data.block(1).trial.rea_time]);
+    tim.rea_sd    = nanstd([data.block(1).trial.rea_time]);
     tim.mov       = nanmean([data.block(1).trial.mov_time]);
+    tim.mov_sd    = nanstd([data.block(1).trial.mov_time]);
     save(sprintf('./Data/%s_timParams',design.vpcode),'tim');
     save(sprintf('./Data/%s_setUpData',design.vpcode),'data');
     
