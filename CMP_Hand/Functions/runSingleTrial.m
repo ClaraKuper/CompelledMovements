@@ -64,7 +64,9 @@ function [trialData,dataLog]  = runSingleTrial(trial)
     Screen('DrawDots', visual.window, visual.goals(2,:), visual.goalSize, visual.goalColor, [], 2);
     Screen('DrawDots', visual.window, ballPos, visual.ballSize, visual.ballColor, [], 2);
     Screen('DrawLine', visual.window, visual.goalColor, fixPos(1)-50 , fixPos(2), fixPos(1) +50, fixPos(2));
-    t_draw = Screen('Flip', visual.window);
+    Screen('Flip', visual.window);
+    Datapixx('RegWrRd');
+    t_draw = Datapixx('GetTime');
 
     % while the finger is not yet on the starting position, monitor for that
     while ~ on_fix

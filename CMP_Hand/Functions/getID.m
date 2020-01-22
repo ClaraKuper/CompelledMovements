@@ -4,7 +4,7 @@ function [vp_id] = getID(expCode)
         FlushEvents('keyDown');
 
         ID      = input('\nType participant ID:  ','s');
-        session = input('\nType session  number: ');
+        session = input('\nType session  number: ','s');
         while length(session) <= 1
             session = sprintf('0%i',session);
         end

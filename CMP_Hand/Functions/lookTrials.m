@@ -4,7 +4,7 @@ include_clean = false;
 for b = 1:length(dataLog.block)
   for t = 1:length(dataLog.block(b).trial)
     trial = dataLog.block(b).trial(t);
-    if ~ data.block(b).trial(t).success
+    if data.block(b).trial(t).success
       t_start   = min(trial.timetag);
       time      = [trial.timetag-t_start];
       touchX    = [trial.touches(1,:)];

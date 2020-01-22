@@ -44,4 +44,4 @@ while start < max(alljumpTime)
   start       = stop;
 end
 
-plot(plot_data(1,:),plot_data(2,:));
+plot(plot_data(1,:),plot_data(2,:))
