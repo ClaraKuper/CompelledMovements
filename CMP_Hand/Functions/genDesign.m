@@ -44,7 +44,7 @@ if settings.TEST == 0
     design.nTrials = 10;
 else
     design.nBlocks = 5;
-    design.nTrials = 30;
+    design.nTrials = 40;
 end
 
 
