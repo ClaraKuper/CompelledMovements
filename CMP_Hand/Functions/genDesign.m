@@ -42,24 +42,30 @@ end
 if settings.TEST == 0
     design.nBlocks = 1;
     design.nTrials = 10;
-else
+else if setting.TEST == 1
     design.nBlocks = 5;
-    design.nTrials = 40;
+    design.nTrials = input('How many trials per block do do feel like? Enter a number.\n There will be 5 blocks. \n');
 end
-
-
-% fixation point
 
 
 % conditions
 design.goalPos    = [1,2]; % 1 is left, 2 is right goal
-design.ballMoved  = -300;  % ball moved relative from fixation point
-design.stimsize   = 20;
-design.move_at_speed     = 5;     % how many pixels does the ball cross with each jump?
 
-% measured_variables
-    
+% position and size variables, in dva
+design.stimSize   = 1;     % in dva
 
+design.ballStart   = -10;   % ball moved relative from screen centre in dva
+design.tarPosY     = 10;    % target position from screen centre in dva
+design.tarPosX     = 10;    % how much are the targets moved left/right
+
+design.keeperY     = 10;    % where is the starting position of the keeper? 
+
+design.rangeAccept = 2;
+design.rangeCalib  = 1;
+
+% speed variables, in dva/s
+
+design.speed = 33.33;  % dva/s how fast does the ball move?
 
 % build
 for b = 1:design.nBlocks
@@ -72,7 +78,7 @@ for b = 1:design.nBlocks
             % define jump time
             trial(t).jumpTim = rand(1)*design.jumpTim;
             % define jump pos
-            trial(t).jumpPos = trial(t).jumpTim*design.move_at_speed*scr.hz;
+            trial(t).jumpPos = trial(t).jumpTim*design.move_at_speed;
             % define fixation duration
             trial(t).fixT    = design.fixDur + rand(1)*design.fixDurJ;
         end

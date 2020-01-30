@@ -56,9 +56,6 @@ function setScreens
   visual.white = WhiteIndex(scr.expScreen);
   visual.black = BlackIndex(scr.expScreen);
   
-  visual.textCol = visual.white;
-  visual.textCol = visual.white;
-  
   % Open windows
   [visual.window, visual.windowRect] = PsychImaging('OpenWindow', scr.expScreen, visual.black);
   [visual.xCenter, visual.yCenter] = RectCenter(visual.windowRect);
@@ -66,31 +63,10 @@ function setScreens
   
   ref = Screen('GetFlipInterval', visual.window);
   scr.hz = 1/ref;
+  
+  visual.ppd = va2pix(1,scr);
 
   visual.winWidth = visual.windowRect(3) - visual.windowRect(1);
   visual.winHeight = visual.windowRect(4) - visual.windowRect(2);
   
-  % define stimulus properties as visuals
-  % Parameters for stimuli
-  visual.ball_moved       = -100; % shift of moving stim from centre, negative values above screen center
-  visual.distr_moved_side = 300; %how much are the non-targets moved sideways
-  visual.distr_moved_down = 300; %how much is the distractor moved down 
-
-  visual.ballPos_start   = [visual.xCenter, visual.yCenter] + [0, visual.ball_moved];
-  visual.ballColor = visual.white;
-  visual.ballSize  = 20;
-
-  visual.goalPos1  = [visual.xCenter, visual.yCenter] + [-visual.distr_moved_side,visual.distr_moved_down]; 
-  visual.goalPos2  = [visual.xCenter, visual.yCenter] + [visual.distr_moved_side,visual.distr_moved_down]; 
-  visual.goals     = [visual.goalPos1;visual.goalPos2];
-  visual.goalColor = visual.white;
-  visual.goalSize  = visual.ballSize;
-  visual.range_accept = 50;
-  visual.range_calib  = 25;
-  
-  % fixation Position
-  fixtoGoal        = [0, 350];
-  visual.fixPos    = [visual.xCenter, visual.yCenter] + fixtoGoal;
-        
-  visual.textCol   =  visual.white;     
   end
