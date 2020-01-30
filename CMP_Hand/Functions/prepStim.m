@@ -1,7 +1,7 @@
-# prepare stimuli for presentation
+% prepare stimuli for presentation
 
 function prepStim
-  global design settings scr visual
+  global design scr visual
   
   % define stimulus properties as visuals
   % parameters for stimuli in pix
@@ -39,4 +39,4 @@ function prepStim
   
   visual.speed  = (design.speed*visual.ppd)/scr.hz;
   
-endfunction
+end

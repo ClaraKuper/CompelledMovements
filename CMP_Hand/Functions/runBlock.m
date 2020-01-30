@@ -2,7 +2,7 @@ function [blockData,dataLog] = runBlock(b)
 
     global visual design
     message = sprintf('This is block no. %i', b);
-    DrawFormattedText(visual.window, message, 'center', 200, visual.textCol);
+    DrawFormattedText(visual.window, message, 'center', 200, visual.textColor);
     trials_total = design.nTrialsPB;
     t            = 1;
     
