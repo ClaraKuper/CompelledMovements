@@ -34,7 +34,7 @@ function calibrate_touchpixx(reps)
   while ~calibration_done  
     for rep = 1:reps
       
-      Screen('FillRect', visual.window, calCol, [calDispX1-visual.range_calib calDispY1-visual.range_calib calDispX1+visual.range_calib calDispY1+visual.range_calib]);
+      Screen('FillRect', visual.window, calCol, [calDispX1-visual.rangeCalib calDispY1-visual.rangeCalib calDispX1+visual.rangeCalib calDispY1+visual.rangeCalib]);
       Screen('Flip', visual.window);
       touchPt = [0 0];                        % Wait for press
       
@@ -56,7 +56,7 @@ function calibrate_touchpixx(reps)
 
       % Do same for a second calibration target near bottom-right corner of display
       
-      Screen('FillRect', visual.window, calCol, [calDispX2-visual.range_calib calDispY2-visual.range_calib calDispX2+visual.range_calib calDispY2+visual.range_calib]);
+      Screen('FillRect', visual.window, calCol, [calDispX2-visual.rangeCalib calDispY2-visual.rangeCalib calDispX2+visual.rangeCalib calDispY2+visual.rangeCalib]);
       Screen('Flip', visual.window);
       touchPt = [0 0];         % Wait for press
       
@@ -76,10 +76,10 @@ function calibrate_touchpixx(reps)
           isPressed = status.isPressed;
       end;
     end
-    if std(calTouch.lowright.X) < visual.range_calib/100 &&...
-      std(calTouch.lowright.Y) < visual.range_calib/100 &&...
-     std(calTouch.leftup.X) < visual.range_calib/100 && ...
-     std(calTouch.leftup.Y) < visual.range_calib/100
+    if std(calTouch.lowright.X) < visual.rangeCalib/100 &&...
+      std(calTouch.lowright.Y) < visual.rangeCalib/100 &&...
+     std(calTouch.leftup.X) < visual.rangeCalib/100 && ...
+     std(calTouch.leftup.Y) < visual.rangeCalib/100
      calibration_done = true;
      
      DrawFormattedText(visual.window, 'Calibration successful', textCol);
