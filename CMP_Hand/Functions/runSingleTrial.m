@@ -100,7 +100,7 @@ function [trialData,dataLog]  = runSingleTrial(trial)
 
     % move the ball downwards
     % most crucial timing in this loop
-    while on_keeper && isnan(t_goal)
+    while on_fix && isnan(t_goal)
         Datapixx('RegWrRd');
         if isnan(t_go) % set time stamp the first time this is executed
             t_go = Datapixx('GetTime');
@@ -114,7 +114,7 @@ function [trialData,dataLog]  = runSingleTrial(trial)
         if Datapixx('GetTime')-t_go < trial.jumpTim || jumped % check if jump location has been reached or jump already occured
             ballPos = ballPos+[0,visual.speed];
         else
-            ballPos      = pos_at_jump; % update ball location to after-jump position
+            ballPos      = attackPos; % update ball location to after-jump position
             t_jump       = Datapixx('GetTime');
             jumped       = true;
             dataLog.message = [dataLog.message, sprintf('The ball jumped at %f \n',t_jump)];
