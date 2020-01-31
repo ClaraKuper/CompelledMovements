@@ -30,6 +30,7 @@ design.goalPos    = [1,2]; % 1 is left, 2 is right goal
 
 % position and size variables, in dva
 design.stimSize   = 1;     % in dva
+design.keeperSizw = 2;     % in dva
 
 design.ballStart   = -10;   % ball moved relative from screen centre in dva
 design.tarPosY     = 10;    % target position from screen centre in dva
@@ -41,8 +42,8 @@ design.rangeAccept = 2;
 design.rangeCalib  = 1;
 
 % speed variables, in dva/s
-
-design.speed = 33.33;  % dva/s how fast does the ball move?
+design.runDur =  0.6;      % how long should one trial (movement from start to end) last (in s)
+design.speed = (abs(design.ballStart)+abs(design.tarPosY))/design.runDur;  % dva/s how much does the ball move in one second?
 
 if settings.TEST
     load(sprintf('./Data/%s_timParams.mat',design.vpcode)); % load a matfile with subject name and code
@@ -63,7 +64,7 @@ if settings.TEST == 0
     design.nTrials = 10;
 else
     design.nBlocks = 5;
-    design.nTrials = input('How many trials per block do do feel like? Enter a number.\n There will be 5 blocks. \n');
+    design.nTrials = round(input('How many trials per block do do feel like? Enter an even number.\n There will be 5 blocks. \n')/2);
 end
 
 % build

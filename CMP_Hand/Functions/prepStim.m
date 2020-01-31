@@ -6,11 +6,12 @@ function prepStim
   % define stimulus properties as visuals
   % parameters for stimuli in pix
   visual.ballStart   = design.ballStart * visual.ppd; % shift of moving stim from centre, negative values above screen center
-  visual.tarPosY     = design.tarPosY * visual.ppd; %how much are the non-targets moved sideways
-  visual.tarPosX     = design.tarPosX * visual.ppd; %how much is the distractor moved down 
+  visual.tarPosY     = design.tarPosY * visual.ppd;   % how much are the non-targets moved sideways
+  visual.tarPosX     = design.tarPosX * visual.ppd;   % how much is the distractor moved down 
   visual.stimSize    = design.stimSize * visual.ppd;
   
   visual.keeperY     = design.keeperY * visual.ppd;
+  visual.keeperSize  = (design.keeperSize * visual.ppd) / 2; % divided by two, because 1/2 of the size is on each side of the position
 
   % position in [x,y] coding 
   % ball

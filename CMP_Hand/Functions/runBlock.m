@@ -1,10 +1,11 @@
 function [blockData,dataLog] = runBlock(b)
 
     global visual design
-    message = sprintf('This is block no. %i', b);
-    DrawFormattedText(visual.window, message, 'center', 200, visual.textColor);
+    messageStart = sprintf('This is block no. %i', b);
+    DrawFormattedText(visual.window, messageStart, 'center', 200, visual.textColor);
     trials_total = design.nTrialsPB;
     t            = 1;
+    score        = 0;
     
     Screen('Flip',visual.window);
     WaitSecs(2);
@@ -13,7 +14,9 @@ function [blockData,dataLog] = runBlock(b)
         
         trial = design.b(b).trial(t); 
         
-        [blockData.trial(t),dataLog.trial(t)] = runSingleTrial(trial);
+        [blockData.trial(t),dataLog.trial(t), trialScore] = runSingleTrial(trial, design, visual);
+        
+        score = score + trialScore;
         
         if blockData.trial(t).success
             
@@ -25,6 +28,9 @@ function [blockData,dataLog] = runBlock(b)
         t = t+1;
         
     end
+    
+    messageEnd = sprintf('You made %i points in this block.', score);
+    DrawFormattedText(visual.window, messageEnd, 'center', 200, visual.textColor);
     
     Screen('Flip', visual.window);
     WaitSecs(2);

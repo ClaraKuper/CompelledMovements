@@ -1,7 +1,4 @@
-function [trialData,dataLog]  = runSingleTrial(trial)
-    
-    global design visual settings
-    
+function [trialData,dataLog, trialScore]  = runSingleTrial(trial, design, visual)
 
     Datapixx('SetTouchpixxLog');                                    % Configure TOUCHPixx logging with default buffer
     Datapixx('EnableTouchpixxLogContinuousMode');                   % Continuous logging during a touch. This also gives you long output from buffer reads
@@ -10,7 +7,7 @@ function [trialData,dataLog]  = runSingleTrial(trial)
 
     % Prepare the trial
     jumpPos     = visual.ballPos + [0,trial.jumpPos*visual.ppd];    % the position when the ball jumps to it's attackPos
-    attackPos   = [visual.goals(trial.goalPos,1),jumpPos(2)];       % the attack position, now the target is revealed
+    attackPos   = [visual.goals(trial.goalPos,1),jumpPos(2)+visual.speed];       % the attack position, now the target is revealed
 
     % Assign ball position to be at start
     ballPos = visual.ballPos;
@@ -25,7 +22,6 @@ function [trialData,dataLog]  = runSingleTrial(trial)
     end
 
     % Initialize timing and monitoring parameters
-
     on_fix         = false;
     jumped         = false;
     hit_target     = false;
@@ -48,6 +44,9 @@ function [trialData,dataLog]  = runSingleTrial(trial)
     resPos     = NaN;
     trial_succ = NaN;
     
+    % score
+    trialScore = 0;
+    
     % dataLog - write all the available logging data here
     Datapixx('RegWrRd');
     status             = Datapixx('GetTouchpixxStatus');
@@ -63,7 +62,7 @@ function [trialData,dataLog]  = runSingleTrial(trial)
     Screen('DrawDots', visual.window, visual.goals(1,:), visual.goalSize, visual.goalColor, [], 2);
     Screen('DrawDots', visual.window, visual.goals(2,:), visual.goalSize, visual.goalColor, [], 2);
     Screen('DrawDots', visual.window, ballPos, visual.ballSize, visual.ballColor, [], 2);
-    Screen('DrawLine', visual.window, visual.goalColor, keeperPos(1)-50 , keeperPos(2), keeperPos(1) +50, keeperPos(2));
+    Screen('DrawLine', visual.window, visual.goalColor, keeperPos(1)- visual.keeperSize , keeperPos(2), keeperPos(1) + visual.keeperSize, keeperPos(2));
     Screen('Flip', visual.window);
     Datapixx('RegWrRd');
     t_draw = Datapixx('GetTime');
@@ -93,7 +92,7 @@ function [trialData,dataLog]  = runSingleTrial(trial)
             Screen('DrawDots', visual.window, visual.goals(1,:), visual.goalSize, visual.goalColor, [], 2);
             Screen('DrawDots', visual.window, visual.goals(2,:), visual.goalSize, visual.goalColor, [], 2);
             Screen('DrawDots', visual.window, ballPos, visual.ballSize, visual.ballColor, [], 2);
-            Screen('DrawLine', visual.window, visual.goalColor, keeperPos(1)-50 , keeperPos(2), keeperPos(1) +50, keeperPos(2));
+            Screen('DrawLine', visual.window, visual.goalColor, keeperPos(1)-visual.keeperSize , keeperPos(2), keeperPos(1) + visual.keeperSize, keeperPos(2));
             Screen('Flip', visual.window);
         end
     end;
@@ -107,9 +106,7 @@ function [trialData,dataLog]  = runSingleTrial(trial)
             dataLog.message = [dataLog.message, sprintf('The motion started at %f \n', t_go)];
         end
         
-        % this block updates the ball position. There is a vertical motion
-        % component of the ball moving downwards. at the moment of the
-        % jump, there is only a horizontal displacement
+        % this block updates the ball position. The default is a downward motion with the velocity defined by visual.speed
         
         if Datapixx('GetTime')-t_go < trial.jumpTim || jumped % check if jump location has been reached or jump already occured
             ballPos = ballPos+[0,visual.speed];
@@ -124,7 +121,7 @@ function [trialData,dataLog]  = runSingleTrial(trial)
         Screen('DrawDots', visual.window, visual.goals(1,:), visual.goalSize, visual.goalColor, [], 2);
         Screen('DrawDots', visual.window, visual.goals(2,:), visual.goalSize, visual.goalColor, [], 2);
         Screen('DrawDots', visual.window, ballPos, visual.ballSize, visual.ballColor, [], 2);
-        Screen('DrawLine', visual.window, visual.goalColor, keeperPos(1)-50 , keeperPos(2), keeperPos(1) +50, keeperPos(2));
+        Screen('DrawLine', visual.window, visual.goalColor, keeperPos(1)-visual.keeperSize , keeperPos(2), keeperPos(1) + visual.keeperSize, keeperPos(2));
         Screen('Flip', visual.window);
         
         % Get the touchpixx status
@@ -181,7 +178,7 @@ function [trialData,dataLog]  = runSingleTrial(trial)
             t_goal   = Datapixx('GetTime');
             dataLog.message = [dataLog.message, sprintf('The ball hit the target at %f\n', t_goal)];
             if isnan(t_movEnd)
-                % check if the other target has been reached
+                % set a time for the movement end
                 t_movEnd = t_goal;
                 no_hit   = true;
             end
@@ -210,9 +207,11 @@ function [trialData,dataLog]  = runSingleTrial(trial)
     elseif hit_target 
         DrawFormattedText(visual.window, 'Well done!', 'center', 'center', visual.textColor);
         resPos = goalPos;
+        trialScore = trialScore + 50 + (500 - round(rea_time));;
     elseif hit_distractor
         DrawFormattedText(visual.window, 'Wrong target!', 'center', 'center', visual.textColor);
         resPos = disPos;
+        trialScore = trialScore + (500 - round(rea_time));
     elseif no_hit
         DrawFormattedText(visual.window, 'End point not reached!', 'center', 'center', visual.textColor);
         trial_succ = 3;
@@ -224,11 +223,7 @@ function [trialData,dataLog]  = runSingleTrial(trial)
         trial_succ = 5;
     end
 
-    if settings.DEBUG == 1
-        Screen('DrawDots', visual.window, [touch_X, touch_Y], visual.ballSize, visual.white)
-    end
-
-    Screen('Flip', visual.window)
+    Screen('Flip', visual.window);
     
     trialData.resPos          = resPos;
     trialData.success         = trial_succ;                                 % 0 = success 
@@ -248,6 +243,12 @@ function [trialData,dataLog]  = runSingleTrial(trial)
     trialData.t_movEnd        = t_movEnd;
     trialData.t_goal          = t_goal;
     trialData.t_end           = t_end;
+    
+    if trialScore > 0
+      message = sprintf('You gained %i points.', trialScore);
+      DrawFormattedText(visual.window, message , 'center', 'center', visual.textCol);
+      Screen('Flip', visual.window);
+   end
     
     WaitSecs(design.iti);
 end
