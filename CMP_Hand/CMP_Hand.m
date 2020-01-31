@@ -16,7 +16,7 @@ clear all;
 clear mex;
 clear functions;
 % cursor goes home, command window scrolled up
-home
+home;
 
 % Which experiment are we running?
 expCode = 'CMP_Hand';
@@ -41,9 +41,16 @@ tic;
 % define some settings for the experiment
 global settings visual design
 
-settings.TEST = input('is this a setup(0) or the actual testing (1)?\n'); % 0 = setup session, 1 = actual testing
-settings.MODE = 1; % 1 = Hands, 2 = Eyes, 3 = both
-settings.DEBUG= 0; % 1 = debug mode, 0 = normal mode
+settings.TEST   = input('is this a setup(0) or the actual testing (1)?\n'); % 0 = setup session, 1 = actual testing
+settings.MODE   = 1; % 1 = Hands, 2 = Eyes, 3 = both
+settings.DEBUG  = 0; % 1 = debug mode, 0 = normal mode
+settings.CODE   = 0; % if you want to use old calibration data, this can be changed when the experiment start. Don't change here.
+if settings.TEST
+    settings.TRIALS = round(input('How many trials per block do do feel like? Enter an even number.\n There will be 5 blocks. \n')/2);
+    settings.BLOCK  = input('Do you want the difficulty to be blocked? Yes(1) or No(0)? \n');
+else
+    settings.BLOCK  = 0;
+end
 
 %% start the experiment loop, errors in this loop will be caught
 try
@@ -56,10 +63,17 @@ try
             % create data file
             datFile    = sprintf('%s.dat',subPath);
             datLogFile = sprintf('%sLog.dat',subPath);
-            if ~settings.TEST && exist(datFile,'file')
-                o = input('>>>> This file exists already. Should I overwrite it [y / n]? ','s');
+            if settings.TEST && exist(datFile,'file')
+                o = input('>>>> This file exists already. Should I overwrite it [y / n]? \n','s');
                 if strcmp(o,'y')
                     newFile = 1;
+                else
+                    reuse = input('Do you want to use old calibration files? [y/n]? \n', 's');
+                    if strcmp(reuse,'y')
+                        settings.testCode = subCode;
+                        settings.CODE = 1;
+                        fprintf('Ok, will use the old file for calibration. Please enter a new code to save the data \n');
+                    end
                 end
             else
                 newFile = 1;
@@ -96,7 +110,7 @@ try
     Screen('Flip',visual.window);
     WaitSecs(2);
     
-    for b = 1:design.nBlocks
+    for b = design.blockOrder
         [data.block(b),dataLog.block(b)] = runBlock(b);
     end    
     

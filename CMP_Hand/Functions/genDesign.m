@@ -30,7 +30,7 @@ design.goalPos    = [1,2]; % 1 is left, 2 is right goal
 
 % position and size variables, in dva
 design.stimSize   = 1;     % in dva
-design.keeperSizw = 2;     % in dva
+design.keeperSize = 2;     % in dva
 
 design.ballStart   = -10;   % ball moved relative from screen centre in dva
 design.tarPosY     = 10;    % target position from screen centre in dva
@@ -45,18 +45,6 @@ design.rangeCalib  = 1;
 design.runDur =  0.6;      % how long should one trial (movement from start to end) last (in s)
 design.speed = (abs(design.ballStart)+abs(design.tarPosY))/design.runDur;  % dva/s how much does the ball move in one second?
 
-if settings.TEST
-    load(sprintf('./Data/%s_timParams.mat',design.vpcode)); % load a matfile with subject name and code
-    design.alResT    = tim.rea + 2*tim.rea_sd;      % Allowed response time
-    design.alMovT    = tim.mov + 2*tim.mov_sd;      % Allowed movement time
-    design.jumpTim   = design.alResT;               % random time after which target jumps, maximum is the allowed response time 
-else
-    design.jumpTim   = 0.1;
-    design.alResT    = 1.0;      % Allowed response time
-    design.alMovT    = 1.0;      % Allowed movement time
-end
-    
-
 % overall information %
 % number of blocks and trials in the first round
 if settings.TEST == 0
@@ -64,8 +52,28 @@ if settings.TEST == 0
     design.nTrials = 10;
 else
     design.nBlocks = 5;
-    design.nTrials = round(input('How many trials per block do do feel like? Enter an even number.\n There will be 5 blocks. \n')/2);
+    design.nTrials = settings.TRIALS;
 end
+
+if settings.TEST
+    if settings.CODE
+        load(sprintf('./Data/%s_timParams.mat',settings.testCode)); % load a matfile with subject name and code
+    else
+        load(sprintf('./Data/%s_timParams.mat',design.vpcode)); % load a matfile with subject name and code
+    end
+    design.alResT    = tim.rea + 2*tim.rea_sd;      % Allowed response time
+    design.alMovT    = tim.mov + 2*tim.mov_sd;      % Allowed movement time
+    design.jumpTim   = design.alResT;               % random time after which target jumps, maximum is the allowed response time 
+    if settings.BLOCK
+        blockBy    = design.alResT/design.nBlocks;
+        jumpBlocks = [0:blockBy:design.alResT];
+    end
+else
+    design.jumpTim   = 0.1;
+    design.alResT    = 1.0;      % Allowed response time
+    design.alMovT    = 1.0;      % Allowed movement time
+end
+    
 
 % build
 for b = 1:design.nBlocks
@@ -76,8 +84,12 @@ for b = 1:design.nBlocks
             % define goal position
             trial(t).goalPos = goal;
             % define jump time
-            trial(t).jumpTim = rand(1)*design.jumpTim;
+            if settings.BLOCK
+                trial(t).jumpTim = blockBy*rand(1)+jumpBlocks(b);
+            else
+                trial(t).jumpTim = rand(1)*design.jumpTim;
             % define jump pos
+            end
             trial(t).jumpPos = trial(t).jumpTim*design.speed;
             % define fixation duration
             trial(t).fixT    = design.fixDur + rand(1)*design.fixDurJ;
@@ -88,7 +100,9 @@ for b = 1:design.nBlocks
     design.b(b).trial = trial(r);
 end
 
-design.blockOrder = 1:b;
+blockOrder = [1:b];
+
+design.blockOrder = blockOrder(randperm(length(blockOrder)));
 design.nTrialsPB  = t;
 
 % save 

@@ -207,11 +207,11 @@ function [trialData,dataLog, trialScore]  = runSingleTrial(trial, design, visual
     elseif hit_target 
         DrawFormattedText(visual.window, 'Well done!', 'center', 'center', visual.textColor);
         resPos = goalPos;
-        trialScore = trialScore + 50 + (500 - round(rea_time));;
+        trialScore = trialScore + 100 + (500 - round(rea_time*1000));
     elseif hit_distractor
         DrawFormattedText(visual.window, 'Wrong target!', 'center', 'center', visual.textColor);
         resPos = disPos;
-        trialScore = trialScore + (500 - round(rea_time));
+        trialScore = trialScore + (500 - round(rea_time*1000));
     elseif no_hit
         DrawFormattedText(visual.window, 'End point not reached!', 'center', 'center', visual.textColor);
         trial_succ = 3;
@@ -219,7 +219,7 @@ function [trialData,dataLog, trialScore]  = runSingleTrial(trial, design, visual
         DrawFormattedText(visual.window, 'Wait till go signal!', 'center', 'center', visual.textColor);
         trial_succ = 4;
     else
-        DrawFormattedText(visual.window, 'Unknown Error', 'center', 'center', visual.textCol);
+        DrawFormattedText(visual.window, 'Unknown Error', 'center', 'center', visual.textColor);
         trial_succ = 5;
     end
 
@@ -245,9 +245,10 @@ function [trialData,dataLog, trialScore]  = runSingleTrial(trial, design, visual
     trialData.t_end           = t_end;
     
     if trialScore > 0
-      message = sprintf('You gained %i points.', trialScore);
-      DrawFormattedText(visual.window, message , 'center', 'center', visual.textCol);
+      message = sprintf('+ %i points!', trialScore);
+      DrawFormattedText(visual.window, message , 'center', 'center', visual.textColor);
       Screen('Flip', visual.window);
+      WaitSecs(0.5);
    end
     
     WaitSecs(design.iti);

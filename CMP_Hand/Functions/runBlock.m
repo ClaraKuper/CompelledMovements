@@ -29,7 +29,7 @@ function [blockData,dataLog] = runBlock(b)
         
     end
     
-    messageEnd = sprintf('You made %i points in this block.', score);
+    messageEnd = sprintf('You gained %i points in this block.', score);
     DrawFormattedText(visual.window, messageEnd, 'center', 200, visual.textColor);
     
     Screen('Flip', visual.window);

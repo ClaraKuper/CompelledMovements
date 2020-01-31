@@ -7,7 +7,7 @@ function setScreens
 
   % in case a test version is running on a different screen with
   % worse syncing properties
-  if settings.TEST
+  if ~ settings.TEST
       Screen('Preference', 'SkipSyncTests', 1);
   end
 
