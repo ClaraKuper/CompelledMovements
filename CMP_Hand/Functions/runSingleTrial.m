@@ -148,7 +148,7 @@ function [trialData,dataLog, trialScore]  = runSingleTrial(trial, design, visual
                 t_movStart      = timetag(status.newLogFrames);
                 t_movStartPixx  = Datapixx('GetTime');
                 dataLog.message = [dataLog.message, sprintf('The hand moved at %f\n', t_movStartPixx)];
-                if isnan(t_go)
+                if t_movStart - t_go < 0
                     early_rea   = true;
                     break
                 end
@@ -207,11 +207,11 @@ function [trialData,dataLog, trialScore]  = runSingleTrial(trial, design, visual
     elseif hit_target 
         DrawFormattedText(visual.window, 'Well done!', 'center', 'center', visual.textColor);
         resPos = goalPos;
-        trialScore = trialScore + 100 + (500 - round(rea_time*1000));
+        trialScore = trialScore + 200 + (400 - round(rea_time*1000));
     elseif hit_distractor
         DrawFormattedText(visual.window, 'Wrong target!', 'center', 'center', visual.textColor);
         resPos = disPos;
-        trialScore = trialScore + (500 - round(rea_time*1000));
+        trialScore = trialScore + (400 - round(rea_time*1000));
     elseif no_hit
         DrawFormattedText(visual.window, 'End point not reached!', 'center', 'center', visual.textColor);
         trial_succ = 3;
