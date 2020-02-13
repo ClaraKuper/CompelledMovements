@@ -21,21 +21,23 @@ library(ggplot2)
 reaches <- read.table('logData.txt')
 data    <- read.table('offData.txt')
 
-reaches$participant <- c(NA)
-
 names_r <- c('session','block','trial','timetag','x','y','participant')
 names_d <- c('participant', 'session','block', 'trial', 'effector','goalPos', 'jumpTim',  'jumpPos',  'fixT','alReaT',  'resPos',  't_draw',  't_touched',  't_go',  't_movStart',  't_jump',  't_movEnd',  't_goal', 't_end', 'reaT', 'gapT','processT', 'correct')
 colnames(reaches) <- names_r
 colnames(data) <- names_d
 
-reaches$participant[which(reaches$session == 1)] <- c('TR')
-reaches$participant[which(reaches$session != 1)] <- c('ck')
+reaches$participant <- as.factor(reaches$participant)
+
+levels(reaches$participant) <- c('TR','av','ck','lk')
+
 ```
 Create a unique trial ID to identify each trial
 ```{r}
 # id = session+block+trial
 reaches$ID = paste(reaches$participant, reaches$session,reaches$block,reaches$trial, sep = "")
 data$ID    = paste(data$participant, data$session,data$block,data$trial, sep = "")
+
+
 ```
 clean the reach data
 
@@ -160,15 +162,14 @@ full_plot <- ggplot(data = reaches_normalized, aes(x,y, group = ID))+
   blanktheme
 
 full_plot
-old_full
 
 ```
 add correct_incorrect info
 
 ```{r}
 
-low <- min(data$processT)
-high<- max(data$processT)
+low <- min(data$processT, na.rm = TRUE)
+high<- max(data$processT , na.rm = TRUE)
 step<- 0.05
 tb  <- seq(low, high, by = step)
 

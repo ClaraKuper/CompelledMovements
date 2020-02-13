@@ -136,8 +136,12 @@ function [trialData,dataLog, trialScore]  = runSingleTrial(trial, design, visual
             dataLog.frames     = status.newLogFrames;
             touch_X = visual.mx*touches(1,status.newLogFrames)+visual.bx;   % Convert touch to screen coordinates
             touch_Y = visual.my*touches(2,status.newLogFrames)+visual.by;   % We use the one-before-last available touch information
-                                                                                % on frame is discarded to account for no-touch-recoding (coordinates 0,0)
-            keeperPos  = [touch_X,touch_Y];                                        % we set the position of the bar to the current touch coordinates 
+            
+                                                                    % on frame is discarded to account for no-touch-recoding (coordinates 0,0)
+            
+            if touch_X > 0 & touch_Y > 0
+              keeperPos  = [touch_X,touch_Y];                                        % we set the position of the bar to the current touch coordinates 
+            end
             
             % check if movement started (touch not within box around window)
             Datapixx('RegWrRd');

@@ -12,7 +12,7 @@ knitr::opts_knit$set(root.dir = "~/Projects/2019_Compelled_Movements/CompelledMo
 
 ```{r}
 library(ggplot2)
-
+setwd("~/Projects/2019_Compelled_Movements/CompelledMovements/CMP_Hand/Data")
 data <- read.table("offData.txt")
 
 names = c('participant', 'session','block', 'trial', 'effector','goalPos', 'jumpTim',  'jumpPos',  'fixT','alReaT',  'resPos',  't_draw',  't_touched',  't_go',  't_movStart',  't_jump',  't_movEnd',  't_goal', 't_end', 'reaT', 'gapT','processT', 'correct')
